@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contract.harvest.mapper.DBPreCheckMapper">
+    <select id="dbColumnCheck" resultType="String">
+        SELECT CONCAT('表结构不一致 tbName:',tb_name,' 期望字段:',exp_columns,' 数据库中字段:',db_columns) as msg
+        FROM (
+        SELECT
+            COUNT(*)= 19 as fg,'contract_order' as tb_name,group_concat(COLUMN_NAME) db_columns,
+            'ID,FEE,Z_TS,PROFIT,TRADE_VOLUME,TRADE_AVG_PRICE,TRADE_TURNOVER,PRICE,ORDER_ID,Z_OFFSET,DIRECTION,CONTRACT_TYPE,ORDER_PRICE_TYPE,ORDER_TYPE,VOLUME,LEVER_RATE,ORDER_STATUS,CREATE_TIME,UPDATE_TIME' exp_columns
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE
+            TABLE_NAME = 'contract_order'
+            AND COLUMN_NAME in('ID','FEE','Z_TS','PROFIT','TRADE_VOLUME','TRADE_AVG_PRICE','TRADE_TURNOVER','PRICE','ORDER_ID','Z_OFFSET','DIRECTION','CONTRACT_TYPE','ORDER_PRICE_TYPE','ORDER_TYPE','VOLUME','LEVER_RATE','ORDER_STATUS','CREATE_TIME','UPDATE_TIME')
+        GROUP BY TABLE_NAME
+        )a
+        WHERE fg=0
+    </select>
+</mapper>

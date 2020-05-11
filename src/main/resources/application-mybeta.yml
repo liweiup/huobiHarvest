@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: harvest
+  environment: mybeta
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      auto-commit: true
+      idle-timeout: 60000
+      connection-timeout: 60000
+      max-lifetime: 60000
+      maximum-pool-size: 200
+      minimum-idle: 10
+      validation-timeout: 3000
+      login-timeout: 5
+    mysql:
+      jdbc-url: jdbc:mysql://149.129.80.230:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
+      username: root
+      password: iphone5C,.
+    pingcap:
+      jdbc-url: jdbc:mysql://149.129.80.230:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
+      username: root
+      password: iphone5C,.
+  redis:
+    host: 149.129.80.230
+    port: 6379
+    database: 1
+    password: iphone5C,.
+    timeout: 10000
+    jedis:
+      pool:
+        max-idle: -1
+        max-wait:
+mybatis:
+  check-config-location: false
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mybatis/*.xml
+
+logging:
+#  appname: /home/docker/logs/
+  appname: /usr/local/var/www/java_log/
+  config: classpath:logback-spring.xml
+  level:
+    root: error
+    org:
+      springframework: error
+    com:
+      contract:
+        harvest: info
+
+#huobi:
+#  api_key: 0fb32fd1-697ea0e8-1hrfj6yhgg-453e0
+#  secret_key: 375ac040-22d27b91-0a622abf-68e1d
+
+huobi:
+  api_key: hrf5gdfghe-23e84cef-8eff49c4-4e9cd
+  secret_key: d96a3731-b7f2ad82-0fc74226-4cbc2

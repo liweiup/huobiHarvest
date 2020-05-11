@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.contract.harvest.mapper.ContractOrderDOMapper">
+    <!-- 自动生成,请修改 CONTRACT_ORDER.xml -->
+    <resultMap id="BaseResultMap"  type="com.contract.harvest.entity.ContractOrderDO">
+        <id column="ID" property="id" jdbcType="INTEGER" javaType="Integer"/>
+        <result column="FEE" property="fee" jdbcType="DECIMAL" javaType="Long"/>
+        <result column="Z_TS" property="zTs" jdbcType="BIGINT" javaType="Long"/>
+        <result column="PROFIT" property="profit" jdbcType="DECIMAL" javaType="Long"/>
+        <result column="TRADE_VOLUME" property="tradeVolume" jdbcType="DECIMAL" javaType="Long"/>
+        <result column="TRADE_AVG_PRICE" property="tradeAvgPrice" jdbcType="DECIMAL" javaType="Long"/>
+        <result column="TRADE_TURNOVER" property="tradeTurnover" jdbcType="DECIMAL" javaType="Long"/>
+        <result column="PRICE" property="price" jdbcType="DOUBLE" javaType="Double"/>
+        <result column="ORDER_ID" property="orderId" jdbcType="VARCHAR" javaType="String"/>
+        <result column="Z_OFFSET" property="zOffset" jdbcType="CHAR" javaType="String"/>
+        <result column="DIRECTION" property="direction" jdbcType="CHAR" javaType="String"/>
+        <result column="CONTRACT_TYPE" property="contractType" jdbcType="VARCHAR" javaType="String"/>
+        <result column="ORDER_PRICE_TYPE" property="orderPriceType" jdbcType="VARCHAR" javaType="String"/>
+        <result column="ORDER_TYPE" property="orderType" jdbcType="BIT" javaType="Boolean"/>
+        <result column="VOLUME" property="volume" jdbcType="INTEGER" javaType="Integer"/>
+        <result column="LEVER_RATE" property="leverRate" jdbcType="TINYINT" javaType="Integer"/>
+        <result column="ORDER_STATUS" property="orderStatus" jdbcType="TINYINT" javaType="Integer"/>
+        <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" javaType="java.util.Date"/>
+        <result column="UPDATE_TIME" property="updateTime" jdbcType="TIMESTAMP" javaType="java.util.Date"/>
+    </resultMap>
+
+
+    <sql id="Base_SF_Column_List">
+        sf.ID,sf.FEE,sf.Z_TS,sf.PROFIT,sf.TRADE_VOLUME
+        ,sf.TRADE_AVG_PRICE,sf.TRADE_TURNOVER,sf.PRICE,sf.ORDER_ID,sf.Z_OFFSET
+        ,sf.DIRECTION,sf.CONTRACT_TYPE,sf.ORDER_PRICE_TYPE,sf.ORDER_TYPE,sf.VOLUME
+        ,sf.LEVER_RATE,sf.ORDER_STATUS,sf.CREATE_TIME,sf.UPDATE_TIME
+    </sql>
+    <sql id="Base_Column_List">
+        ID,FEE,Z_TS,PROFIT,TRADE_VOLUME 
+        ,TRADE_AVG_PRICE,TRADE_TURNOVER,PRICE,ORDER_ID,Z_OFFSET 
+        ,DIRECTION,CONTRACT_TYPE,ORDER_PRICE_TYPE,ORDER_TYPE,VOLUME 
+        ,LEVER_RATE,ORDER_STATUS,CREATE_TIME,UPDATE_TIME
+    </sql>
+
+
+    <!--插入表:contract_order-->
+    <insert id="insert"  >
+        <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+        <![CDATA[
+        INSERT INTO contract_order(
+            ID
+            ,FEE
+            ,Z_TS
+            ,PROFIT
+            ,TRADE_VOLUME
+            ,TRADE_AVG_PRICE
+            ,TRADE_TURNOVER
+            ,PRICE
+            ,ORDER_ID
+            ,Z_OFFSET
+            ,DIRECTION
+            ,CONTRACT_TYPE
+            ,ORDER_PRICE_TYPE
+            ,ORDER_TYPE
+            ,VOLUME
+            ,LEVER_RATE
+            ,ORDER_STATUS
+            ,CREATE_TIME
+            ,UPDATE_TIME
+        )VALUES(
+             null
+            , #{fee,jdbcType=DECIMAL}
+            , #{zTs,jdbcType=BIGINT}
+            , #{profit,jdbcType=DECIMAL}
+            , #{tradeVolume,jdbcType=DECIMAL}
+            , #{tradeAvgPrice,jdbcType=DECIMAL}
+            , #{tradeTurnover,jdbcType=DECIMAL}
+            , #{price,jdbcType=DOUBLE}
+            , #{orderId,jdbcType=VARCHAR}
+            , #{zOffset,jdbcType=CHAR}
+            , #{direction,jdbcType=CHAR}
+            , #{contractType,jdbcType=VARCHAR}
+            , #{orderPriceType,jdbcType=VARCHAR}
+            , #{orderType,jdbcType=BIT}
+            , #{volume,jdbcType=INTEGER}
+            , #{leverRate,jdbcType=TINYINT}
+            , #{orderStatus,jdbcType=TINYINT}
+            , #{createTime,jdbcType=TIMESTAMP}
+            , #{updateTime,jdbcType=TIMESTAMP}
+        )
+        ]]>
+    </insert>
+
+    <!--批量插入表:contract_order-->
+    <insert id="insertBatch"  >
+        INSERT INTO contract_order(
+            ID
+            ,FEE
+            ,Z_TS
+            ,PROFIT
+            ,TRADE_VOLUME
+            ,TRADE_AVG_PRICE
+            ,TRADE_TURNOVER
+            ,PRICE
+            ,ORDER_ID
+            ,Z_OFFSET
+            ,DIRECTION
+            ,CONTRACT_TYPE
+            ,ORDER_PRICE_TYPE
+            ,ORDER_TYPE
+            ,VOLUME
+            ,LEVER_RATE
+            ,ORDER_STATUS
+            ,contract_code
+            ,CREATE_TIME
+            ,UPDATE_TIME
+        )VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                 null
+                , #{item.fee,jdbcType=DECIMAL}
+                , #{item.zTs,jdbcType=BIGINT}
+                , #{item.profit,jdbcType=DECIMAL}
+                , #{item.tradeVolume,jdbcType=DECIMAL}
+                , #{item.tradeAvgPrice,jdbcType=DECIMAL}
+                , #{item.tradeTurnover,jdbcType=DECIMAL}
+                , #{item.price,jdbcType=DOUBLE}
+                , #{item.orderId,jdbcType=VARCHAR}
+                , #{item.zOffset,jdbcType=CHAR}
+                , #{item.direction,jdbcType=CHAR}
+                , #{item.contractType,jdbcType=VARCHAR}
+                , #{item.orderPriceType,jdbcType=VARCHAR}
+                , #{item.orderType,jdbcType=BIT}
+                , #{item.volume,jdbcType=INTEGER}
+                , #{item.leverRate,jdbcType=TINYINT}
+                , #{item.orderStatus,jdbcType=TINYINT}
+                , #{item.contract_code,jdbcType=VARCHAR}
+                , #{item.createTime,jdbcType=TIMESTAMP}
+                , #{item.updateTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <!--根据主键删除数据:contract_order-->
+    <delete id="deleteById"  >
+        <![CDATA[
+        DELETE /*MS-CONTRACT-ORDER-DELETEBYID*/ FROM contract_order
+        WHERE
+            ID = #{id,jdbcType=INTEGER}
+        ]]>
+    </delete>
+
+    <!--根据主键获取数据:contract_order-->
+    <select id="getById" resultMap="BaseResultMap" >
+        SELECT /*MS-CONTRACT-ORDER-GETBYID*/  <include refid="Base_Column_List" />
+        FROM contract_order
+        WHERE
+        <![CDATA[
+            ID = #{id,jdbcType=INTEGER}
+        ]]>
+    </select>
+</mapper>

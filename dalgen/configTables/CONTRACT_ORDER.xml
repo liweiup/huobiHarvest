@@ -1,0 +1,164 @@
+<!DOCTYPE table SYSTEM "../config/table-config-1.0.dtd">
+<table sqlname="contract_order" physicalName="contract_order" remark="交易订单表">
+    <!--  特殊字符说明 &lt;&gt; <> -->
+    <!-- baseSql option中 select * 会自动替换为 include -->
+    <sql id="Base_Column_List">
+        ID,FEE,Z_TS,PROFIT,TRADE_VOLUME 
+        ,TRADE_AVG_PRICE,TRADE_TURNOVER,PRICE,ORDER_ID,Z_OFFSET 
+        ,DIRECTION,CONTRACT_TYPE,ORDER_PRICE_TYPE,ORDER_TYPE,VOLUME 
+        ,LEVER_RATE,ORDER_STATUS,CREATE_TIME,UPDATE_TIME
+    </sql>
+
+    <!-- baseSql option中 select sf.* 会自动替换为 include -->
+    <sql id="Base_SF_Column_List">
+        sf.ID,sf.FEE,sf.Z_TS,sf.PROFIT,sf.TRADE_VOLUME
+        ,sf.TRADE_AVG_PRICE,sf.TRADE_TURNOVER,sf.PRICE,sf.ORDER_ID,sf.Z_OFFSET
+        ,sf.DIRECTION,sf.CONTRACT_TYPE,sf.ORDER_PRICE_TYPE,sf.ORDER_TYPE,sf.VOLUME
+        ,sf.LEVER_RATE,sf.ORDER_STATUS,sf.CREATE_TIME,sf.UPDATE_TIME
+    </sql>
+
+    <operation name="insert" paramtype="object" remark="插入表:contract_order">
+        <selectKey resultType="java.lang.Long" keyProperty="id" order="AFTER">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+        <![CDATA[
+        INSERT INTO contract_order(
+            ID
+            ,FEE
+            ,Z_TS
+            ,PROFIT
+            ,TRADE_VOLUME
+            ,TRADE_AVG_PRICE
+            ,TRADE_TURNOVER
+            ,PRICE
+            ,ORDER_ID
+            ,Z_OFFSET
+            ,DIRECTION
+            ,CONTRACT_TYPE
+            ,ORDER_PRICE_TYPE
+            ,ORDER_TYPE
+            ,VOLUME
+            ,LEVER_RATE
+            ,ORDER_STATUS
+            ,CREATE_TIME
+            ,UPDATE_TIME
+        )VALUES(
+             null
+            , #{fee,jdbcType=DECIMAL}
+            , #{zTs,jdbcType=BIGINT}
+            , #{profit,jdbcType=DECIMAL}
+            , #{tradeVolume,jdbcType=DECIMAL}
+            , #{tradeAvgPrice,jdbcType=DECIMAL}
+            , #{tradeTurnover,jdbcType=DECIMAL}
+            , #{price,jdbcType=DOUBLE}
+            , #{orderId,jdbcType=VARCHAR}
+            , #{zOffset,jdbcType=CHAR}
+            , #{direction,jdbcType=CHAR}
+            , #{contractType,jdbcType=VARCHAR}
+            , #{orderPriceType,jdbcType=VARCHAR}
+            , #{orderType,jdbcType=BIT}
+            , #{volume,jdbcType=INTEGER}
+            , #{leverRate,jdbcType=TINYINT}
+            , #{orderStatus,jdbcType=TINYINT}
+            , #{createTime,jdbcType=TIMESTAMP}
+            , #{updateTime,jdbcType=TIMESTAMP}
+        )
+        ]]>
+    </operation>
+
+    <!-- foreach 可以自定义类型，paramtype="primitive" foreach->javatype="自己书写的类"  -->
+    <!-- 只有一个参数且为List时必须将参数命名为list -->
+    <operation name="insertBatch" paramtype="objectList" remark="批量插入表:contract_order">
+        INSERT INTO contract_order(
+            ID
+            ,FEE
+            ,Z_TS
+            ,PROFIT
+            ,TRADE_VOLUME
+            ,TRADE_AVG_PRICE
+            ,TRADE_TURNOVER
+            ,PRICE
+            ,ORDER_ID
+            ,Z_OFFSET
+            ,DIRECTION
+            ,CONTRACT_TYPE
+            ,ORDER_PRICE_TYPE
+            ,ORDER_TYPE
+            ,VOLUME
+            ,LEVER_RATE
+            ,ORDER_STATUS
+            ,CREATE_TIME
+            ,UPDATE_TIME
+        )VALUES
+        <foreach collection="list"  item="item" separator=",">
+            (
+                 null
+                , #{item.fee,jdbcType=DECIMAL}
+                , #{item.zTs,jdbcType=BIGINT}
+                , #{item.profit,jdbcType=DECIMAL}
+                , #{item.tradeVolume,jdbcType=DECIMAL}
+                , #{item.tradeAvgPrice,jdbcType=DECIMAL}
+                , #{item.tradeTurnover,jdbcType=DECIMAL}
+                , #{item.price,jdbcType=DOUBLE}
+                , #{item.orderId,jdbcType=VARCHAR}
+                , #{item.zOffset,jdbcType=CHAR}
+                , #{item.direction,jdbcType=CHAR}
+                , #{item.contractType,jdbcType=VARCHAR}
+                , #{item.orderPriceType,jdbcType=VARCHAR}
+                , #{item.orderType,jdbcType=BIT}
+                , #{item.volume,jdbcType=INTEGER}
+                , #{item.leverRate,jdbcType=TINYINT}
+                , #{item.orderStatus,jdbcType=TINYINT}
+                , #{item.createTime,jdbcType=TIMESTAMP}
+                , #{item.updateTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </operation>
+
+    <!-- 不推荐使用全 update 有需要自己打开
+    <operation name="update" paramtype="object" remark="更新表:contract_order">
+        <![CDATA[
+        UPDATE contract_order
+        SET
+            FEE             = #{fee,jdbcType=DECIMAL}
+            ,Z_TS            = #{zTs,jdbcType=BIGINT}
+            ,PROFIT          = #{profit,jdbcType=DECIMAL}
+            ,TRADE_VOLUME    = #{tradeVolume,jdbcType=DECIMAL}
+            ,TRADE_AVG_PRICE = #{tradeAvgPrice,jdbcType=DECIMAL}
+            ,TRADE_TURNOVER  = #{tradeTurnover,jdbcType=DECIMAL}
+            ,PRICE           = #{price,jdbcType=DOUBLE}
+            ,ORDER_ID        = #{orderId,jdbcType=VARCHAR}
+            ,Z_OFFSET        = #{zOffset,jdbcType=CHAR}
+            ,DIRECTION       = #{direction,jdbcType=CHAR}
+            ,CONTRACT_TYPE   = #{contractType,jdbcType=VARCHAR}
+            ,ORDER_PRICE_TYPE = #{orderPriceType,jdbcType=VARCHAR}
+            ,ORDER_TYPE      = #{orderType,jdbcType=BIT}
+            ,VOLUME          = #{volume,jdbcType=INTEGER}
+            ,LEVER_RATE      = #{leverRate,jdbcType=TINYINT}
+            ,ORDER_STATUS    = #{orderStatus,jdbcType=TINYINT}
+            ,CREATE_TIME     = #{createTime,jdbcType=TIMESTAMP}
+            ,UPDATE_TIME     = #{updateTime,jdbcType=TIMESTAMP}
+        WHERE
+            ID              = #{id,jdbcType=INTEGER}
+        ]]>
+    </operation>
+    -->
+    <operation name="deleteById"  remark="根据主键删除数据:contract_order">
+        <![CDATA[
+        DELETE FROM contract_order
+        WHERE
+            ID = #{id,jdbcType=INTEGER}
+        ]]>
+    </operation>
+
+    <operation name="getById" multiplicity="one" remark="根据主键获取数据:contract_order">
+        SELECT *
+        FROM contract_order
+        WHERE
+        <![CDATA[
+            ID = #{id,jdbcType=INTEGER}
+        ]]>
+    </operation>
+
+</table>

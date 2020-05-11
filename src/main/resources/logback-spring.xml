@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration debug="false">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <springProperty name="appName" source="logging.appname" scope="context"/>
+    <property name="LOG_FILE" value="${appName}"/>
+    <property name="ENV" value="${environment}"/>
+    <!--日志格式-->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} -%msg%n"/>
+    <!--控制台-->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <springProfile name="mybeta">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} == %-5level %logger{50} - %msg%n</pattern>
+            </springProfile>
+            <springProfile name="mylocal">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} == %-5level %logger{50} - %msg%n</pattern>
+            </springProfile>
+        </layout>
+    </appender>
+
+    <!--按天生成日志-->
+    <appender name="logFile"  class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Prudent>true</Prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>
+                ${LOG_FILE}/%d{yyyy-MM-dd}-%i.log
+            </FileNamePattern>
+            <MaxHistory>1</MaxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!--保留天数-->
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                ${LOG_PATTERN}
+            </Pattern>
+        </layout>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="logFile"/>
+    </root>
+</configuration>
