@@ -6,6 +6,8 @@ import com.contract.harvest.service.*;
 import org.junit.Test;
 import org.junit.runner.Result;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +18,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -38,15 +41,28 @@ public class test {
     @Autowired
     private VerifyParams verifyParams;
 
+    @Autowired
+    private ElesService elesService;
+
+    private static final Logger logger = LoggerFactory.getLogger(HuobiService.class);
+
     @Test
     public void TestLoadingCache() throws Exception{
         Map<String,String> params = new HashMap<>();
 //        params.put("symbol","BSV");
-        params.put("symbol","ETC");
+        params.put("symbol","BSV");
 //        params.put("symbol","BTC");
 //        huobiService.invoke_bi(params);
 //        huobiService.handleOrder();
-        huobiService.handleCloseOrder();
+//        huobiService.handleCloseOrder();
+//        logger.error("222");
+//        float a = (float) 188.452;
+//        float b = (float) 188.428;
+
+//        System.out.println(BigDecimal.valueOf((a - b) / b));
+//        System.out.println(BigDecimal.valueOf(a));
+//        System.out.println(verifyParams.getFloatNum((a - b) / b));
+        elesService.get_harvest_log("");
     }
 
 

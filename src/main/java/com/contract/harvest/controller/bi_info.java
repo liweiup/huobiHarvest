@@ -1,6 +1,7 @@
 package com.contract.harvest.controller;
 
 import com.contract.harvest.entity.HuobiEntity;
+import com.contract.harvest.service.ElesService;
 import com.contract.harvest.service.HuobiService;
 import com.contract.harvest.service.TaskService;
 import org.apache.http.HttpException;
@@ -29,6 +30,10 @@ public class bi_info {
     @Autowired
     private TaskService taskService;
 
+    @Autowired
+    private ElesService elesService;
+
+
     @RequestMapping("get_bi_info")
     @ResponseBody
     public String get_bi_info(@RequestParam String symbol,
@@ -38,12 +43,11 @@ public class bi_info {
         return bi_info;
     }
 
-//    @RequestMapping("show_harvest_log")
-//    @ResponseBody
-//    public String get_harvest_log(@RequestParam String date) {
-//
-//        return bi_info;
-//    }
+    @RequestMapping("show_harvest_log")
+    @ResponseBody
+    public StringBuffer get_harvest_log(@RequestParam String date) throws IOException {
+        return elesService.get_harvest_log(date);
+    }
 
     @RequestMapping("getPriceLimit")
     @ResponseBody
