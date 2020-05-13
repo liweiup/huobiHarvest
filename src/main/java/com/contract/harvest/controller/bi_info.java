@@ -38,6 +38,13 @@ public class bi_info {
         return bi_info;
     }
 
+//    @RequestMapping("show_harvest_log")
+//    @ResponseBody
+//    public String get_harvest_log(@RequestParam String date) {
+//
+//        return bi_info;
+//    }
+
     @RequestMapping("getPriceLimit")
     @ResponseBody
     public String getPriceLimit(@RequestParam Map<String,String> Params) throws IOException, HttpException {
@@ -111,7 +118,7 @@ public class bi_info {
     public void invoke_bi(@RequestParam Map<String,String> Params) throws Exception {
         int num = 0;
         while (true) {
-            Thread.sleep(2000);
+//            Thread.sleep(2000);
             taskService.exec_invoke_bi(Params,num);
 //            System.out.println("线程池中线程数目："+taskExecutor.getThreadPoolExecutor().getPoolSize()+"，队列中等待执行的任务数目："+
 //                taskExecutor.getThreadPoolExecutor().getQueue().size()+"，已执行玩别的任务数目："+taskExecutor.getThreadPoolExecutor().getCompletedTaskCount());

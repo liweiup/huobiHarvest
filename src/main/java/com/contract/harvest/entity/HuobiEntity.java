@@ -4,12 +4,17 @@ import com.huobi.common.api.IHbdmRestApi;
 import com.huobi.common.request.Order;
 import org.apache.http.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
 import java.util.List;
 
 @Repository
+@CacheConfig(cacheNames="huobi:api:cache")
 public class HuobiEntity {
 
     @Autowired
@@ -19,11 +24,13 @@ public class HuobiEntity {
     private IHbdmRestApi futurePostV1;
 
     //获取合约信息
+    @Cacheable(keyGenerator = "HuobiEntity_keyGenerator",cacheManager = "huobiEntityRedisCacheManager")
     public String getContractInfo(String symbol,String contract_type, String contract_code) throws HttpException,IOException{
         String contractInfo = "";
         contractInfo = futureGetV1.futureContractInfo(symbol, contract_type, contract_code);
         return contractInfo;
     }
+
     //获取合约指数信息
     public String getContractIndex(String symbol) throws IOException, HttpException {
         String contractIndex = "";

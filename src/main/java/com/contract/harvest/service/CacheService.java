@@ -5,6 +5,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class CacheService {
 
@@ -36,9 +38,9 @@ public class CacheService {
     private RedisService redisService;
 
     //设置下单百分比
-    public void set_percent_flag(String symbol,float percent) {
+    public void set_percent_flag(String symbol,String percent) {
         String percent_flag = redis_key_percent_flag+":"+symbol;
-        redisService.rightPush(percent_flag, Float.toString(percent));
+        redisService.rightPush(percent_flag, percent);
     }
     //移除下单百分比
     public void remove_percent_flag(String symbol,String offset) {

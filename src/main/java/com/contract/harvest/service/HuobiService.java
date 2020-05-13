@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 
@@ -98,10 +99,6 @@ public class HuobiService {
         String week_direction = directionMap.get("week_direction");
         //上次开仓时的基差
         float pre_percent = cacheService.get_percent_flag(symbol);
-
-//        System.out.println(quarter_direction);
-//        System.out.println(week_direction);
-//        System.exit(0);
 //        logger.info("交易次数:"+position_num+"map:"+priceMap);
         //交易代码
         String[] contract_code_arr = String.valueOf(priceMap.get("contract_code")).split("-");
@@ -123,20 +120,22 @@ public class HuobiService {
                 Thread.sleep(3000);
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_order");
-                logger.info("开仓下单-币:"+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent)+"order_info:"+orders.toString());
+                logger.info("开仓下单-币:"+symbol+"当前基差:"+directionMap.get("percent")+"order_info:"+orders.toString());
                 return;
             }else {
-                logger.info("不做处理,币:"+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent)+"设置基差:"+basis_percent);
+                logger.info("不做处理,币:"+symbol+"当前基差:"+directionMap.get("percent")+"设置基差:"+basis_percent);
                 return;
             }
         //或者开仓次数等于1
         }else if (position_num >= 1)
         {
             float flag_percent = now_percent - pre_percent;
+
             if (now_percent < basis_close_percent) {
                 //获取平仓方向
                 Map<String,String> flagDirection = verifyParams.getContractAccountPositionInfo(symbol,cq_contract_type,nc_contract_type);
                 if (flagDirection.isEmpty()) {
+                    logger.info("币："+symbol+"没有可平仓位"+"当前基差:"+directionMap.get("percent"));
                     cacheService.inform_sub("order_queue","handle_close_order");
                     return;
                 }
@@ -145,7 +144,7 @@ public class HuobiService {
                 String sum_volume = flagDirection.get("volume");
                 float profit = Float.parseFloat(flagDirection.get("profit"));
                 if (profit < 0) {
-                    logger.info("币:"+symbol+"亏损无法平仓-盈利:"+profit+"");
+                    logger.info("币:"+symbol+"亏损无法平仓-盈利:"+profit+"当前基差:"+directionMap.get("percent"));
                     return;
                 }
                 //平仓
@@ -160,7 +159,7 @@ public class HuobiService {
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_close_order");
                 //清仓
-                logger.info("清仓下单,币:"+symbol+"平仓张数:"+sum_volume+"当前基差:"+verifyParams.getFloatNum(now_percent)+"清仓基差:"+basis_close_percent+"交易次数:"+position_num+"订单"+contractBatchorder);
+                logger.info("清仓下单,币:"+symbol+"预估盈利:"+profit+"平仓张数:"+sum_volume+"当前基差:"+directionMap.get("percent")+"清仓基差:"+basis_close_percent+"交易次数:"+position_num+"订单"+contractBatchorder);
                 return;
             }
             /**
@@ -182,18 +181,22 @@ public class HuobiService {
                     Thread.sleep(3000);
                     //订阅通知
                     cacheService.inform_sub("order_queue","handle_order");
-                    logger.info("加仓下单-币:"+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent)+"order_info:"+orders.toString());
+                    logger.info("加仓下单-币:"+symbol+"当前基差:"+directionMap.get("percent")+"order_info:"+orders.toString());
                     return;
                 }else if (flag_percent < 0) {
                     //获取平仓方向
                     Map<String,String> flagDirection = verifyParams.getContractAccountPositionInfo(symbol,cq_contract_type,nc_contract_type);
+                    if (flagDirection.isEmpty()) {
+                        logger.info("币：" + symbol + "没有可减仓位"+"当前基差:"+directionMap.get("percent"));
+                        return;
+                    }
                     quarter_direction = flagDirection.get(cq_contract_type);
                     week_direction = flagDirection.get(nc_contract_type);
                     float profit = Float.parseFloat(flagDirection.get("profit"));
                     //减仓
                     List<Order> orders = verifyParams.getListOrder(symbol,basis_percent_after,volume,"close",lever_rate,order_price_type,contract_code_arr,quarter_direction,week_direction,cq_contract_type,nc_contract_type);
                     if (profit < 0) {
-                        logger.info("币:"+symbol+"亏损无法减仓-盈利:"+profit+"");
+                        logger.info("币:"+symbol+"亏损无法减仓-盈利:"+profit+"当前基差:"+directionMap.get("percent"));
                         return;
                     }
                     //减仓下单
@@ -203,14 +206,14 @@ public class HuobiService {
                     //订阅通知
                     cacheService.inform_sub("order_queue","handle_close_order");
 //                    this.handleCloseOrder();
-                    logger.info("减仓下单,币:"+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent)+"上次基差"+verifyParams.getFloatNum(pre_percent)+"订单"+orders.toString());
+                    logger.info("减仓下单,币:"+symbol+"预估盈利:"+profit+"当前基差:"+directionMap.get("percent")+"上次基差"+verifyParams.getFloatNum(pre_percent)+"订单"+orders.toString());
                     return;
                 }else {
-                    logger.info("不做处理--次数:"+position_num+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent));
+                    logger.info("不做处理--次数:"+position_num+symbol+"当前基差:"+directionMap.get("percent"));
                     return;
                 }
             }
-            logger.info("次数:"+position_num+symbol+"当前基差:"+verifyParams.getFloatNum(now_percent));
+            logger.info("次数:"+position_num+symbol+"当前基差:"+directionMap.get("percent"));
         }
         return;
     }
@@ -234,7 +237,7 @@ public class HuobiService {
     public void handleOrder() throws Exception {
         //获取队列里的一个订单
         String order_info_str = cacheService.get_order_in_queue("open");
-//        order_info_str = "{\"symbol\":\"ETC\",\"status\":\"ok\",\"data\":{\"errors\":[],\"success\":[{\"order_id\":706798440843272192,\"index\":1,\"order_id_str\":\"706798440843272192\"},{\"order_id\":706798440872632322,\"index\":2,\"order_id_str\":\"706798440872632322\"}]},\"ts\":1587125375356}";
+//        order_info_str = "{\"symbol\":\"BSV\",\"status\":\"ok\",\"data\":{\"errors\":[],\"success\":[{\"order_id\":709565299313250304,\"index\":1,\"order_id_str\":\"709565299313250304\"},{\"order_id\":709565299363581952,\"index\":2,\"order_id_str\":\"709565299363581952\"}]},\"ts\":1587125375356}";
         if (StringUtils.isEmpty(order_info_str)) {
             logger.info("获取队列中的订单为空:["+order_info_str+"]");
             return;
@@ -288,7 +291,7 @@ public class HuobiService {
             logger.error("成交均价基差为0:["+contractOrderInfo+"]");
         }
         //设置基差
-        cacheService.set_percent_flag(symbol,sure_basis_percent);
+        cacheService.set_percent_flag(symbol,verifyParams.getFloatNum(sure_basis_percent));
         //设置本次交易的币种周期
         cacheService.set_redis_key_deal_flag(contract_code_str,orderMap.get("symbol"));
         //订单成交信息入队列
@@ -297,7 +300,7 @@ public class HuobiService {
         Long num = contractOrderDAO.insertBatch(orderDoList);
         //移除本条挂单记录
         cacheService.lpop_order_in_queue("open");
-        logger.info("币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+sure_basis_percent+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]");
+        logger.info("币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+verifyParams.getFloatNum(sure_basis_percent)+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]");
     }
 
     /**
@@ -306,7 +309,7 @@ public class HuobiService {
     public void handleCloseOrder() throws Exception {
         //获取队列里的平仓一个订单
         String order_info_str = cacheService.get_order_in_queue("close");
-            order_info_str = "{\"symbol\":\"ETC\",\"data\":{\"success\":[{\"order_id_str\":\"709131828400963584\",\"index\":1,\"order_id\":709131828400963584},{\"order_id_str\":\"709131828426129409\",\"index\":2,\"order_id\":709131828426129409}],\"errors\":[]},\"offset\":\"close_all\",\"status\":\"ok\",\"ts\":1587484639937}";
+//            order_info_str = "{\"symbol\":\"ETC\",\"data\":{\"success\":[{\"order_id_str\":\"709131828400963584\",\"index\":1,\"order_id\":709131828400963584},{\"order_id_str\":\"709131828426129409\",\"index\":2,\"order_id\":709131828426129409}],\"errors\":[]},\"offset\":\"close_all\",\"status\":\"ok\",\"ts\":1587484639937}";
         if (StringUtils.isEmpty(order_info_str)) {
             logger.error("获取平仓队列中的订单为空:["+order_info_str+"]");
             return;
@@ -365,11 +368,11 @@ public class HuobiService {
         ContractOrderDO one = orderDoList.get(0);
         ContractOrderDO two = orderDoList.get(1);
         //收益
-        String sumProfit = String.format("%.4f",one.getProfit() + two.getProfit());
+        String sumProfit = verifyParams.getFloatNum(one.getProfit() + two.getProfit());
         //手续费
         String sumFee = verifyParams.getFloatNum(one.getFee() + two.getFee());
         //基差
-        String basisPrice = String.format("%.4f",Math.abs(one.getTradeAvgPrice() - two.getTradeAvgPrice()) / one.getTradeAvgPrice() * 100);
+        String basisPrice = verifyParams.getFloatNum(Math.abs(one.getTradeAvgPrice() - two.getTradeAvgPrice()) / one.getTradeAvgPrice() * 100);
         //订单成交信息入数据库
         Long num = contractOrderDAO.insertBatch(orderDoList);
         logger.info("币:"+symbol+"平仓下单信息:[收益"+sumProfit+"手续费"+sumFee+"基差:"+basisPrice+"%订单信息:"+contractOrderInfo+"]");
