@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.*;
 
-@Controller
-@ControllerAdvice
+@RestController
 public class bi_info {
 
     @Autowired
@@ -44,81 +43,59 @@ public class bi_info {
     }
 
     @RequestMapping("show_harvest_log")
-    @ResponseBody
     public StringBuffer get_harvest_log(@RequestParam String date) throws IOException {
         return elesService.get_harvest_log(date);
     }
 
     @RequestMapping("getPriceLimit")
-    @ResponseBody
     public String getPriceLimit(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String priceLimit = huobiEntity.getPriceLimit(Params.get("symbol"),Params.get("contract_type"),"");
-        return priceLimit;
+        return huobiEntity.getPriceLimit(Params.get("symbol"),Params.get("contract_type"),"");
     }
 
     @RequestMapping("getContractIndex")
-    @ResponseBody
     public String getContractIndex(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String contractIndex = huobiEntity.getContractIndex(Params.get("symbol"));
-        return contractIndex;
+        return huobiEntity.getContractIndex(Params.get("symbol"));
     }
 
 
     @RequestMapping("getOpenInterest")
-    @ResponseBody
     public String getOpenInterest(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String getOpenInterest = huobiEntity.getOpenInterest(Params.get("symbol"),Params.get("contract_type"),"");
-        return getOpenInterest;
+        return huobiEntity.getOpenInterest(Params.get("symbol"),Params.get("contract_type"),"");
     }
     @RequestMapping("getMarketDetailMerged")
-    @ResponseBody
     public String getMarketDetailMerged(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String detailMerged = huobiEntity.getMarketDetailMerged(Params.get("symbol"));
-        return detailMerged;
+        return huobiEntity.getMarketDetailMerged(Params.get("symbol"));
     }
     @RequestMapping("getMarketHistoryTrade")
-    @ResponseBody
     public String getMarketHistoryTrade(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String marketHistoryTrade = huobiEntity.getMarketHistoryTrade(Params.get("symbol"),Params.get("size"));
-        return marketHistoryTrade;
+        return huobiEntity.getMarketHistoryTrade(Params.get("symbol"),Params.get("size"));
     }
     @RequestMapping("getContractAccountInfo")
-    @ResponseBody
     public String getContractAccountInfo(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String accountInfo = huobiEntity.getContractAccountInfo(Params.get("symbol"));
-        return accountInfo;
+        return huobiEntity.getContractAccountInfo(Params.get("symbol"));
     }
 
     @RequestMapping("getContractHisbasisAll")
-    @ResponseBody
     public String getContractHisbasisAll(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String accountInfo = huobiEntity.getContractHisbasisAll(Params.get("symbol"), Params.get("period"), Params.get("basis_price_type"), Params.get("size"));
-        return accountInfo;
+        return huobiEntity.getContractHisbasisAll(Params.get("symbol"), Params.get("period"), Params.get("basis_price_type"), Params.get("size"));
     }
 
     @RequestMapping("getContractElitePositionRatio")
-    @ResponseBody
     public String getContractElitePositionRatio(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String accountInfo = huobiEntity.getContractElitePositionRatio(Params.get("symbol"),Params.get("period"));
-        return accountInfo;
+        return huobiEntity.getContractElitePositionRatio(Params.get("symbol"),Params.get("period"));
     }
 
     @RequestMapping("getContractEliteAccountRatio")
-    @ResponseBody
     public String getContractEliteAccountRatio(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String accountInfo = huobiEntity.getContractEliteAccountRatio(Params.get("symbol"),Params.get("period"));
-        return accountInfo;
+        return huobiEntity.getContractEliteAccountRatio(Params.get("symbol"),Params.get("period"));
     }
     @RequestMapping("getContractPositionInfo")
-    @ResponseBody
     public String getContractPositionInfo(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        String accountInfo = huobiEntity.getContractAccountPositionInfo(Params.get("symbol"));
-        return accountInfo;
+        return huobiEntity.getContractAccountPositionInfo(Params.get("symbol"));
     }
 
 
     @RequestMapping("invoke_bi")
-    @ResponseBody
     public void invoke_bi(@RequestParam Map<String,String> Params) throws Exception {
         int num = 0;
         while (true) {
@@ -130,26 +107,9 @@ public class bi_info {
         }
     }
 
-    @RequestMapping("index")
-    public String index() {
-        Map<String,String> Params = new HashMap<>();
-        Params.put("flag","ddd");
-        return "index";
-    }
-
-    //查出用户数据，在页面展示
-    @RequestMapping("/success")
-    public String success(Map<String,Object> map){
-        map.put("hello","<h1>你好</h1>");
-        map.put("users", Arrays.asList("zhangsan","lisi","wangwu"));
-        return "success";
-    }
     @RequestMapping("/getContractHisorders")
-    @ResponseBody
     public String getContractHisorders(@RequestParam Map<String,String> Params) throws IOException, HttpException {
-        System.out.println(Params);
-        String accountInfo = huobiEntity.getContractHisorders(Params.get("symbol"),Params.get("trade_type"),Params.get("type"),Params.get("status"),Params.get("create_date"),Params.get("page_index"),Params.get("page_size"));
-        return accountInfo;
+        return huobiEntity.getContractHisorders(Params.get("symbol"),Params.get("trade_type"),Params.get("type"),Params.get("status"),Params.get("create_date"),Params.get("page_index"),Params.get("page_size"));
     }
 
 
