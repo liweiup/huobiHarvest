@@ -69,7 +69,6 @@ public class HuobiService {
     }
 
     public void invoke_bi(Map<String,String> params) throws Exception {
-        cacheService.inform_sub("order_queue","handle_order");
         //获取季度合约
         String symbol = params.get("symbol");
         Map<String, String> priceMap;
