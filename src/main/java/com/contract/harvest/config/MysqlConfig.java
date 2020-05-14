@@ -51,8 +51,7 @@ public class MysqlConfig {
         config.setIdleTimeout(idleTimeoutMs);
         config.setMaximumPoolSize(maxPoolSize);
         config.setMinimumIdle(minIdle);
-        HikariDataSource dataSource = new HikariDataSource(config);
-        return dataSource;
+        return new HikariDataSource(config);
     }
 
 }

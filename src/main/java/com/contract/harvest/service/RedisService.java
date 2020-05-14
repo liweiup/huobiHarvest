@@ -28,10 +28,10 @@ public class RedisService {
     private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
-    private ListOperations listOperations;
+    private ListOperations<String, Object> listOperations;
 
     @Autowired
-    private SetOperations setOperations;
+    private SetOperations<String, Object> setOperations;
 
     /**
      * 不设置过期时长

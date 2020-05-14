@@ -7,13 +7,12 @@ import com.contract.harvest.entity.ContractOrderDO;
 import com.contract.harvest.entity.HuobiEntity;
 import com.huobi.common.request.Order;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 
@@ -56,6 +55,9 @@ public class HuobiService {
     @Autowired
     private VerifyParams verifyParams;
 
+    @Autowired
+    private RedisTemplate<String,Object> redisTemplate;
+
     public String invoke_bi_info(String symbol,String contract_type, String contract_code) {
         String bi_info = "";
         try{
@@ -67,6 +69,7 @@ public class HuobiService {
     }
 
     public void invoke_bi(Map<String,String> params) throws Exception {
+        cacheService.inform_sub("order_queue","handle_order");
         //获取季度合约
         String symbol = params.get("symbol");
         Map<String, String> priceMap;
@@ -220,7 +223,7 @@ public class HuobiService {
     /**
      * 获取订单实体
      */
-    public List<ContractOrderDO> getContractOrderDO(JSONArray orderData,String flag) throws Exception  {
+    public List<ContractOrderDO> getContractOrderDO(JSONArray orderData,String flag) {
         List<ContractOrderDO> orderDoList = new ArrayList<>();
         for (Object order:orderData) {
             JSONObject jo_order = (JSONObject)order;
@@ -333,12 +336,12 @@ public class HuobiService {
         }
         //检测订单是否存在set中
         Boolean orderIdExistsFlag = cacheService.getOrderIdStrIsExist(order_id_str);
-//        if (!orderIdExistsFlag) {
-//            //从挂单队列中将订单取出并放到错误队列
-//            cacheService.lpop_order_to_error_queue("close");
-//            logger.error("订单id已存在:[币:"+symbol+"订单id:"+order_id_str+"]");
-//            return;
-//        }
+        if (!orderIdExistsFlag) {
+            //从挂单队列中将订单取出并放到错误队列
+            cacheService.lpop_order_to_error_queue("close");
+            logger.error("订单id已存在:[币:"+symbol+"订单id:"+order_id_str+"]");
+            return;
+        }
         //获取订单信息
         String contractOrderInfo = huobiEntity.getcontractOrderInfo(order_id_str,"",symbol);
         //将已成功平仓的订单修改数据库

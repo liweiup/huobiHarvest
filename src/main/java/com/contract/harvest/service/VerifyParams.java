@@ -233,7 +233,7 @@ public class VerifyParams {
     /**
      * 获取季度，次周，本周合约价格
      */
-    public Map<String, Float> getContractAllPrice(String symbol,String price_flag) throws IOException, HttpException, InterruptedException, NullPointerException {
+    public Map<String, Float> getContractAllPrice(String symbol,String price_flag) throws IOException, HttpException, InterruptedException, NullPointerException,IndexOutOfBoundsException {
         Map<String, Float> contractAllPrice = new HashMap<>();
         String quarterInfo = huobiEntity.getMarketDetailMerged(symbol+"_CQ");
         String selWeekInfo = "";
