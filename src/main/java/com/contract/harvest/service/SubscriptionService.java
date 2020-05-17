@@ -15,15 +15,19 @@ public class SubscriptionService {
      * 订阅分发
      * @param message
      */
-    public void handleMessage(String message) throws Exception {
-        //处理订单
-        switch (message) {
-            case "handle_order":
-                huobiService.handleOrder();
-                break;
-            case "handle_close_order":
-                huobiService.handleCloseOrder();
-                break;
+    public void handleMessage(String message) {
+        try {
+            //处理订单
+            switch (message) {
+                case "handle_order":
+                    huobiService.handleOrder();
+                    break;
+                case "handle_close_order":
+                    huobiService.handleCloseOrder();
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

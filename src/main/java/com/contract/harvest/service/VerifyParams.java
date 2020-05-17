@@ -1,11 +1,10 @@
 package com.contract.harvest.service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.contract.harvest.entity.HuobiEntity;
+import com.contract.harvest.tools.Arith;
 import com.huobi.common.request.Order;
-import org.apache.commons.collections.map.DefaultedMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -32,24 +30,30 @@ public class VerifyParams {
     @Value("${space.buy_small_vol}")
     private int buy_small_vol;
 
+    @Value("${space.default_week_type}")
+    private String default_week_type;
+    //交易周期
+    private final String next_week = "qn";
+    private final String now_week = "qc";
+
+    //如"BTC_CW"表示BTC当周合约，"BTC_NW"表示BTC次周合约，"BTC_CQ"表示BTC季度合约
+    private final String quarter_flag = "_CQ";
+    private final String nw_flag = "_NW";
+    private final String cw_flag = "_CW";
+
     private static final Logger logger = LoggerFactory.getLogger(HuobiService.class);
 
     /**
      * 获取基差的百分比与具体基差
      */
-    public Map<String, String> getBasisFlag(double priceOne, double PriceTwo) {
+    public Map<String, String> getBasisFlag(double priceOne, double priceTwo) {
         Map<String, String> priceMap = new HashMap<>();
-
-        if (priceOne > PriceTwo) {
+        if (Arith.compareNum(priceOne,priceTwo)) {
             priceMap.put("open", "-1");
-            priceMap.put("percent", this.getFloatNum((priceOne - PriceTwo) / priceOne));
-
-        } else if (PriceTwo > priceOne) {
-            priceMap.put("open", "1");
-            priceMap.put("percent", this.getFloatNum((PriceTwo - priceOne) / PriceTwo));
+            priceMap.put("percent", String.valueOf(Arith.div(Arith.sub(priceOne,priceTwo),priceOne)));
         } else {
-            priceMap.put("open", "0");
-            priceMap.put("percent","0");
+            priceMap.put("open", "1");
+            priceMap.put("percent", String.valueOf(Arith.div(Arith.sub(priceTwo,priceOne),priceTwo)));
         }
         //开仓方向
         int open_direction = Integer.parseInt(priceMap.get("open"));
@@ -73,11 +77,12 @@ public class VerifyParams {
         //合约标识，用来获取买卖价格
         String contract_code;
         if (deal_flag.equals("")) {
-            cq_contract_info = this.getContractInfo(symbol,"quarter","");
-            nw_contract_info = this.getContractInfo(symbol,"next_week","");
+            cq_contract_info = getContractInfo(symbol,"quarter","");
+            nw_contract_info = getContractInfo(symbol,"next_week","");
             position_num = 0;//交易次数
-            priceMap.put("contract_code",symbol+"_CQ"+"-"+symbol+"_NW");
-            priceMap.put("price_flag","qn");
+            contract_code = symbol+quarter_flag+"-"+symbol+nw_flag;
+            priceMap.put("contract_code",contract_code);
+            priceMap.put("price_flag",default_week_type);
         }else{
             //交易周期
             String[] deal_flag_arr = deal_flag.split("-");
@@ -86,22 +91,22 @@ public class VerifyParams {
             //合约代码
             if (deal_flag_arr.length != 2)
             {
-                logger.error("deal_flag_arr.length():["+deal_flag_arr.length+"]");
+                logger.error("交易代码出错:["+ Arrays.toString(deal_flag_arr) +"]");
                 return null;
             }
             //合约信息
-            cq_contract_info = this.getContractInfo(symbol,"",deal_flag_arr[0]);
-            nw_contract_info = this.getContractInfo(symbol,"",deal_flag_arr[1]);
+            cq_contract_info = getContractInfo(symbol,"",deal_flag_arr[0]);
+            nw_contract_info = getContractInfo(symbol,"",deal_flag_arr[1]);
             //如果是季度合约
             if (cq_contract_info.getString("contract_type").equals("quarter")) {
                 //如果是次周合约
                 if (nw_contract_info.getString("contract_type").equals("next_week")) {
-                    priceMap.put("contract_code",symbol+"_CQ"+"-"+symbol+"_NW");
-                    priceMap.put("price_flag","qn");
+                    priceMap.put("contract_code",symbol+quarter_flag+"-"+symbol+nw_flag);
+                    priceMap.put("price_flag",next_week);
                     //如果是本周合约
                 }else if(nw_contract_info.getString("contract_type").equals("this_week")) {
-                    priceMap.put("contract_code",symbol+"_CQ"+"-"+symbol+"_CW");
-                    priceMap.put("price_flag","qc");
+                    priceMap.put("contract_code",symbol+quarter_flag+"-"+symbol+cw_flag);
+                    priceMap.put("price_flag", now_week);
                 }else {
                     logger.error("nw_contract_info_error:["+nw_contract_info.toJSONString()+"]");
                     return null;
@@ -133,35 +138,32 @@ public class VerifyParams {
      * @throws IOException
      * @throws HttpException
      */
-    public List<Order> getListOrder(String symbol,float basis_percent,String volume,String offset,String lever_rate,
+    public List<Order> getListOrder(String symbol,double basis_percent,String volume,String offset,String lever_rate,
                                     String order_price_type,String[] contract_code_arr,String quarter_direction,
                                     String week_direction,String cq_contract_type,String nc_contract_type)
             throws IOException, HttpException, InterruptedException {
-        List<Order> orders = new ArrayList();
-        Map<String, Float> dealPriceMap = this.getDealPrice(contract_code_arr[0],contract_code_arr[1],quarter_direction,week_direction);
-
+        List<Order> orders = new ArrayList<>();
+        Map<String, Double> dealPriceMap = getDealPrice(contract_code_arr[0],contract_code_arr[1],quarter_direction,week_direction);
         //二次验证基差百分比
-        Map<String, String> basisPriceMap = this.getBasisFlag(dealPriceMap.get("quarterPrice"),dealPriceMap.get("ncPrice"));
-
-        float sure_basis_percent = Float.parseFloat(basisPriceMap.get("percent"));
-
+        Map<String, String> basisPriceMap = getBasisFlag(dealPriceMap.get("quarterPrice"),dealPriceMap.get("ncPrice"));
+        double sure_basis_percent = Double.parseDouble(basisPriceMap.get("percent"));
         if (offset.equals("open")) {
-            if (sure_basis_percent < basis_percent)
+            if (Arith.compareNum(basis_percent,sure_basis_percent))
             {
-                logger.error("开仓基差确认信息:[基差:"+this.getFloatNum(sure_basis_percent)+"季度:"+dealPriceMap.get("quarterPrice")+"周:"+dealPriceMap.get("ncPrice")+"]");
+                logger.error("开仓基差确认有误:[基差:"+Arith.getStrBigDecimal(basis_percent)+"-->"+Arith.getStrBigDecimal(sure_basis_percent)+dealPriceMap.get("quarterPrice")+"周:"+dealPriceMap.get("ncPrice")+"]");
                 return orders;
             }
         }else if (offset.equals("close")) {
-            if (sure_basis_percent > basis_percent)
+            if (Arith.compareNum(sure_basis_percent,basis_percent))
             {
-                logger.error("平仓基差确认信息:[基差:"+this.getFloatNum(sure_basis_percent)+"季度:"+dealPriceMap.get("quarterPrice")+"周:"+dealPriceMap.get("ncPrice")+"]");
+                logger.error("平仓基差确认有误:[基差:"+Arith.getStrBigDecimal(basis_percent)+"-->"+Arith.getStrBigDecimal(sure_basis_percent)+"季度:"+dealPriceMap.get("quarterPrice")+"周:"+dealPriceMap.get("ncPrice")+"]");
                 return orders;
             }
         }
-        //获取开仓挂单队列是否有订单
+        //获取开平仓挂单队列是否有订单
         Long order_queue_len = cacheService.get_redis_key_order_queue_len(offset);
         if (order_queue_len > 0) {
-            logger.info("已有订单等待处理,币:"+symbol);
+            logger.info("已有订单等待处理,币:"+symbol+"offset:"+offset);
             Thread.sleep(1500);
             order_queue_len = cacheService.get_redis_key_order_queue_len(offset);
             if  (order_queue_len > 0) {
@@ -172,10 +174,9 @@ public class VerifyParams {
             return orders;
         }
         String quarterPrice = String.valueOf(dealPriceMap.get("quarterPrice"));
-        String nwPrice = String.valueOf(dealPriceMap.get("ncPrice"));
-
+        String ncPrice = String.valueOf(dealPriceMap.get("ncPrice"));
         Order order_quarter = new Order(symbol, "", cq_contract_type, "", quarterPrice, volume, quarter_direction, offset, lever_rate, order_price_type);
-        Order order_week = new Order(symbol, "", nc_contract_type, "", nwPrice, volume, week_direction, offset, lever_rate, order_price_type);
+        Order order_week = new Order(symbol, "", nc_contract_type, "", ncPrice, volume, week_direction, offset, lever_rate, order_price_type);
         orders.add(order_quarter);
         orders.add(order_week);
         return orders;
@@ -183,26 +184,27 @@ public class VerifyParams {
     /**
      * 获取可平仓位与方向
      */
-    public Map<String, String> getContractAccountPositionInfo(String symbol,String cq_contract_type,String nc_contract_type) throws IOException, HttpException {
+    public Map<String, String> getContractAccountPositionInfo(String symbol) throws IOException, HttpException {
         String positionInfo = huobiEntity.getContractAccountPositionInfo(symbol);
         JSONObject positions = (JSONObject) JSONObject.parseObject(positionInfo).getJSONArray("data").get(0);
         JSONArray positionsArr = positions.getJSONArray("positions");
-        Map<String,String> flagDirection = new HashMap<String,String>();
+        Map<String,String> flagDirection = new HashMap<>();
         if (positionsArr.size() == 0) {
             return flagDirection;
         }
-        float profit = (float) 0;
+        double profit = 0;
         for (Object position:positionsArr) {
             JSONObject positionObj = JSONObject.parseObject(String.valueOf(position));
             String contract_code = positionObj.getString("contract_code");
+            String contract_type = positionObj.getString("contract_type");
             String direction = positionObj.getString("direction");
             String volume = String.valueOf(positionObj.getIntValue("volume"));
             flagDirection.put(contract_code,direction.equals("sell") ? "buy" : "sell");
+            flagDirection.put(contract_type,flagDirection.get(contract_code));
             flagDirection.put("volume",volume);
-            profit += positionObj.getFloatValue("profit");
+            profit = Arith.add(profit,positionObj.getDoubleValue("profit"));
         }
         flagDirection.put("profit",String.valueOf(profit));
-
         return flagDirection;
     }
     /**
@@ -211,59 +213,73 @@ public class VerifyParams {
      * @param quarter_direction 季度购买方向
      * @param week_direction    周购买方向
      */
-    public Map<String, Float> getDealPrice(String symbol_cq,String symbol_nc,String quarter_direction, String week_direction) throws IOException, HttpException, InterruptedException {
+    public Map<String, Double> getDealPrice(String symbol_cq,String symbol_nc,String quarter_direction, String week_direction) throws IOException, HttpException, InterruptedException {
         //获取买一价和卖一价进行交易
         String quarterInfo = huobiEntity.getMarketDetailMerged(symbol_cq);
         String nwInfo = huobiEntity.getMarketDetailMerged(symbol_nc);
         JSONObject quarterInfoJsonObj = JSONObject.parseObject(quarterInfo);
         JSONObject nwInfoJsonObj = JSONObject.parseObject(nwInfo);
-        JSONArray quarterPrice = quarterInfoJsonObj.getJSONObject("tick").getJSONArray(quarter_direction.equals("buy") ? "ask" : "bid");
-        JSONArray ncPrice = nwInfoJsonObj.getJSONObject("tick").getJSONArray(week_direction.equals("buy") ? "ask" : "bid");
-
-        if (quarterPrice.getIntValue(1) < buy_small_vol || ncPrice.getIntValue(1) < buy_small_vol) {
+        String quarterPriceFlag,selWeekPriceFlag;
+        quarterPriceFlag = quarter_direction.equals("buy") ? "ask" : "bid";
+        selWeekPriceFlag = week_direction.equals("buy") ? "ask" : "bid";
+        JSONArray quarterPrice = quarterInfoJsonObj.getJSONObject("tick").getJSONArray(quarterPriceFlag);
+        JSONArray ncPrice = nwInfoJsonObj.getJSONObject("tick").getJSONArray(selWeekPriceFlag);
+        if (Arith.compareNum(quarterPrice.getIntValue(1),buy_small_vol) || Arith.compareNum(ncPrice.getIntValue(1),buy_small_vol)) {
             Thread.sleep(200);
-            this.getDealPrice(symbol_cq,symbol_nc,quarter_direction,week_direction);
+            return getDealPrice(symbol_cq,symbol_nc,quarter_direction,week_direction);
         }
-        Map<String, Float> dealPriceMap = new HashMap<>();
-        dealPriceMap.put("quarterPrice", quarterPrice.getFloatValue(0));
-        dealPriceMap.put("ncPrice", ncPrice.getFloatValue(0));
+        Map<String, Double> dealPriceMap = new HashMap<>();
+        dealPriceMap.put("quarterPrice", quarterPrice.getDoubleValue(0));
+        dealPriceMap.put("ncPrice", ncPrice.getDoubleValue(0));
         return dealPriceMap;
     }
 
     /**
      * 获取季度，次周，本周合约价格
      */
-    public Map<String, Float> getContractAllPrice(String symbol,String price_flag) throws IOException, HttpException, InterruptedException, NullPointerException,IndexOutOfBoundsException {
-        Map<String, Float> contractAllPrice = new HashMap<>();
-        String quarterInfo = huobiEntity.getMarketDetailMerged(symbol+"_CQ");
-        String selWeekInfo = "";
-        if (price_flag.equals("qn")) {
-            selWeekInfo = huobiEntity.getMarketDetailMerged(symbol+"_NW");
-        }else if (price_flag.equals("qc")) {
-            selWeekInfo = huobiEntity.getMarketDetailMerged(symbol+"_CW");
-        }
-        //获取整合基差数据x
+    public Map<String, Double> getContractAllPrice(String symbol, String price_flag,Long position_num) throws IOException, HttpException, InterruptedException, NullPointerException,IndexOutOfBoundsException {
+        Map<String, Double> contractAllPrice = new HashMap<>();
+        String quarterInfo = huobiEntity.getMarketDetailMerged(symbol+quarter_flag);
+        String selWeekFlag = price_flag.equals(next_week) ? symbol+nw_flag : symbol+cw_flag;
+        String selWeekInfo = huobiEntity.getMarketDetailMerged(selWeekFlag);
+        //获取整合基差数据
         String contractHisbasisAll = huobiEntity.getContractHisbasisAll(symbol,"1min","close","1");
         JSONArray contractHisbasisAllArr = JSONObject.parseObject(contractHisbasisAll).getJSONArray("data");
-        if (contractHisbasisAllArr.size() == 0) {
+        if (contractHisbasisAllArr.isEmpty()) {
             Thread.sleep(1000);
-            this.getContractAllPrice(symbol,price_flag);
+            return getContractAllPrice(symbol,price_flag,position_num);
         }
         JSONObject contractHisbasisAllObj = (JSONObject) contractHisbasisAllArr.get(0);
-        float quarterPrice = contractHisbasisAllObj.getFloatValue("contract_price_cq");
-        float nwPrice = contractHisbasisAllObj.getFloatValue("contract_price_nw");
-        float ncPrice = contractHisbasisAllObj.getFloatValue("contract_price_cw");
-        float selWeekPrice = price_flag.equals("qn") ? nwPrice : ncPrice;
-        String quarterPriceFlag = quarterPrice > selWeekPrice ? "ask" : "bid";
-        String selWeekPriceFlag = selWeekPrice > quarterPrice ? "ask" : "bid";
-        JSONArray quarterPriceArr = JSONObject.parseObject(quarterInfo).getJSONObject("tick").getJSONArray(quarterPriceFlag);
-        JSONArray selWeekPriceArr = JSONObject.parseObject(selWeekInfo).getJSONObject("tick").getJSONArray(selWeekPriceFlag);
-        contractAllPrice.put("quarterPrice",quarterPriceArr.getFloatValue(0));
-        contractAllPrice.put("qcPrice",selWeekPriceArr.getFloatValue(0));
-        if (quarterPriceArr.getIntValue(1) < buy_small_vol || selWeekPriceArr.getIntValue(1) < buy_small_vol) {
+        String selWeekPriceKey = price_flag.equals(next_week) ? "contract_price_nw" : "contract_price_cw";
+        double quarterPrice = contractHisbasisAllObj.getDoubleValue("contract_price_cq");
+        double selWeekPrice = contractHisbasisAllObj.getDoubleValue(selWeekPriceKey);
+
+        String quarterPriceFlag = Arith.compareNum(quarterPrice,selWeekPrice) ? "bid" : "ask";
+        String selWeekPriceFlag = quarterPriceFlag.equals("ask") ? "bid" : "ask";
+        JSONObject quarterTick = JSONObject.parseObject(quarterInfo).getJSONObject("tick");
+        JSONObject selWeekTick = JSONObject.parseObject(selWeekInfo).getJSONObject("tick");
+
+        JSONArray quarterPriceArr = quarterTick.getJSONArray(quarterPriceFlag);
+        JSONArray selWeekPriceArr = selWeekTick.getJSONArray(selWeekPriceFlag);
+
+        if (Arith.compareNum(quarterPriceArr.getIntValue(1), buy_small_vol) || Arith.compareNum(selWeekPriceArr.getIntValue(1), buy_small_vol)) {
             Thread.sleep(200);
-            this.getContractAllPrice(symbol,price_flag);
+            return getContractAllPrice(symbol,price_flag,position_num);
         }
+        /*
+          开平仓价格
+          季度想开空单，周想开多单。 比对季度买入价格与次周卖出价格的基差。
+          季度想开多单，周想开空单。 比对季度卖出价格与次周买入价格的基差。
+         */
+        contractAllPrice.put("quarterPrice",quarterPriceArr.getDoubleValue(0));
+        contractAllPrice.put("qcPrice",selWeekPriceArr.getDoubleValue(0));
+        //平仓买卖价和开仓买卖价相反
+        String quarterCloseFlag = quarterPriceFlag.equals("bid") ? "ask" : "bid";
+        String weekCloseFlag = quarterCloseFlag.equals("bid") ? "ask" : "bid";
+        JSONArray quarterClosePriceArr = quarterTick.getJSONArray(quarterCloseFlag);
+        JSONArray weekClosePriceArr = selWeekTick.getJSONArray(weekCloseFlag);
+        contractAllPrice.put("quarterClosePrice",quarterClosePriceArr.getDoubleValue(0));
+        contractAllPrice.put("qcClosePrice",weekClosePriceArr.getDoubleValue(0));
         return contractAllPrice;
     }
 
@@ -297,7 +313,7 @@ public class VerifyParams {
         if (err_code != null) {
             return OrderMap;
         }
-        List<String> order_arr = new ArrayList();
+        List<String> order_arr = new ArrayList<>();
         Object[] success_order = order_data.getJSONArray("success").toArray();
         for (Object flag_order : success_order) {
             JSONObject order = (JSONObject)flag_order;

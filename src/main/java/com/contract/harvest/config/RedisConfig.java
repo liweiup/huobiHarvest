@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -74,20 +75,29 @@ public class RedisConfig {
      * @return
      */
     @Bean
-    public RedisCacheConfiguration publicRedisCacheConfiguration() {
+    public RedisCacheConfiguration publicRedisCacheConfiguration(Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer) {
         return RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext
                 .SerializationPair
                 .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext
                 .SerializationPair
-                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .fromSerializer(jackson2JsonRedisSerializer));
     }
+
+    @Primary
     @Bean
-    public RedisCacheManager huobiEntityRedisCacheManager(RedisCacheConfiguration publicRedisCacheConfiguration,RedisConnectionFactory factory) {
+    public RedisCacheManager huobiEntityRedisCacheManager(RedisCacheConfiguration publicRedisCacheConfiguration,LettuceConnectionFactory factory) {
         publicRedisCacheConfiguration = publicRedisCacheConfiguration.entryTtl(Duration.ofDays(1));
         return RedisCacheManager.builder(factory).cacheDefaults(publicRedisCacheConfiguration).build();
     }
+
+    @Bean
+    public RedisCacheManager huobiEntityHisbasisRedisCacheManager(RedisCacheConfiguration publicRedisCacheConfiguration,LettuceConnectionFactory factory) {
+        publicRedisCacheConfiguration = publicRedisCacheConfiguration.entryTtl(Duration.ofSeconds(5));
+        return RedisCacheManager.builder(factory).cacheDefaults(publicRedisCacheConfiguration).build();
+    }
+
 
     /**
      * redis消息监听器容器
@@ -95,7 +105,7 @@ public class RedisConfig {
      * 通过反射技术调用消息订阅处理器的相关方法进行一些业务处理
      */
     @Bean
-    RedisMessageListenerContainer container(RedisConnectionFactory redisConnectionFactory,MessageListenerAdapter listenerAdapter) {
+    RedisMessageListenerContainer container(LettuceConnectionFactory redisConnectionFactory,MessageListenerAdapter listenerAdapter) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);

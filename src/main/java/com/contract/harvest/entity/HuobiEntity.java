@@ -309,6 +309,7 @@ public class HuobiEntity {
         return hisbasis;
     }
 
+    @Cacheable(keyGenerator = "HuobiEntity_hisbasisKeyGenerator",cacheManager = "huobiEntityHisbasisRedisCacheManager")
     public String getContractHisbasisAll(String symbol, String period, String basis_price_type, String size) throws IOException, HttpException {
         String hisbasisAll = "";
         hisbasisAll = futurePostV1.futureContractHisbasisAll(symbol,period,basis_price_type,size);

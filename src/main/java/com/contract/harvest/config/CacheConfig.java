@@ -19,4 +19,13 @@ public class CacheConfig {
             return method.getName()+time.format(d);
         };
     }
+
+    @Bean("HuobiEntity_hisbasisKeyGenerator")
+    public KeyGenerator hisbasiskeyGenerator() {
+        return (target, method, params) -> {
+            Date d = new Date();
+            SimpleDateFormat time = new SimpleDateFormat("yyyyMMdd");
+            return method.getName()+time.format(d);
+        };
+    }
 }

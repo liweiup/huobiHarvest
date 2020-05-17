@@ -57,13 +57,13 @@ public class CacheService {
         }
     }
     //获取下单百分比
-    public float get_percent_flag(String symbol) {
+    public double get_percent_flag(String symbol) {
         String percent_flag = redis_key_percent_flag+":"+symbol;
         String percent_value = redisService.getLindex(percent_flag, (long) -1);
         if (percent_value.equals("null")) {
             return 0;
         }
-        return Float.parseFloat(percent_value);
+        return Double.parseDouble(percent_value);
     }
 
     //是否已有成交
@@ -114,15 +114,8 @@ public class CacheService {
      * @return
      */
     public Long get_redis_key_order_queue_len(String offset) {
-        switch (offset){
-            //移除一条
-            case "open":
-                return redisService.getListLen(redis_key_order_queue);
-            //全部移除
-            case "close":
-                return redisService.getListLen(redis_key_order_close_queue);
-        }
-        return Long.valueOf(0);
+        String redis_key = offset.equals("open") ? redis_key_order_queue : redis_key_order_close_queue;
+        return redisService.getListLen(redis_key);
     }
 
     /**
@@ -231,9 +224,6 @@ public class CacheService {
      */
     public Boolean getOrderIdStrIsExist(String order_info_str) {
         Long flag = redisService.addSet(redis_key_order_exist_flag,order_info_str);
-        if (flag > 0) {
-            return true;
-        }
-        return false;
+        return flag > 0;
     }
 }
