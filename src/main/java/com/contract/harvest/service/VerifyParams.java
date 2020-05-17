@@ -332,11 +332,4 @@ public class VerifyParams {
         SimpleDateFormat time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
         return time.format(d);
     }
-
-    /**
-     * 科学计数法去除
-     */
-    public String getFloatNum(double d) {
-        return String.format("%.7f",BigDecimal.valueOf(d));
-    }
 }

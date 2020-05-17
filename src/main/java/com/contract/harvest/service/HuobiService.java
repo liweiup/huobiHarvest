@@ -242,13 +242,13 @@ public class HuobiService {
             return;
         }
         //检测订单是否存在set中
-//        Boolean orderIdExistsFlag = cacheService.getOrderIdStrIsExist(order_id_str);
-//        if (!orderIdExistsFlag) {
-//            //从挂单队列中将订单取出并放到错误队列
-//            cacheService.lpop_order_to_error_queue("open");
-//            logger.error("订单id已存在:[币:"+symbol+"订单id:"+order_id_str+"]");
-//            return;
-//        }
+        Boolean orderIdExistsFlag = cacheService.getOrderIdStrIsExist(order_id_str);
+        if (!orderIdExistsFlag) {
+            //从挂单队列中将订单取出并放到错误队列
+            cacheService.lpop_order_to_error_queue("open");
+            logger.error("订单id已存在:[币:"+symbol+"订单id:"+order_id_str+"]");
+            return;
+        }
         //获取订单信息
         String contractOrderInfo = huobiEntity.getcontractOrderInfo(order_id_str,"",symbol);
         //将已成功成交的订单存入队列与数据库
@@ -272,7 +272,7 @@ public class HuobiService {
         }
         //记录本次下单基差
         Map<String,String> basisPriceMap = verifyParams.getBasisFlag(cq_price,nc_price);
-        float sure_basis_percent = Float.parseFloat(basisPriceMap.get("percent"));
+        double sure_basis_percent = Double.parseDouble(basisPriceMap.get("percent"));
         if (sure_basis_percent == 0)
         {
             //从挂单队列中将订单取出并放到错误队列
@@ -280,7 +280,7 @@ public class HuobiService {
             logger.error("成交均价基差为0:["+contractOrderInfo+"]");
         }
         //设置基差
-        cacheService.set_percent_flag(symbol,verifyParams.getFloatNum(sure_basis_percent));
+        cacheService.set_percent_flag(symbol,Arith.getStrBigDecimal(sure_basis_percent));
         //设置本次交易的币种周期
         cacheService.set_redis_key_deal_flag(contract_code_str,orderMap.get("symbol"));
         //订单成交信息入队列
@@ -289,7 +289,7 @@ public class HuobiService {
         Long num = contractOrderDAO.insertBatch(orderDoList);
         //移除本条挂单记录
         cacheService.lpop_order_in_queue("open");
-        logger.info("币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+verifyParams.getFloatNum(sure_basis_percent)+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]");
+        logger.info("币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+Arith.getStrBigDecimal(sure_basis_percent)+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]");
     }
 
     /**
@@ -350,20 +350,20 @@ public class HuobiService {
         if (offset.equals("close_all")) {
             cacheService.del_redis_key_deal_flag(symbol);
         }
-        //修改订单信息
         //获取实体
         List<ContractOrderDO> orderDoList = this.getContractOrderDO(orderData,"insert");
 
         ContractOrderDO one = orderDoList.get(0);
         ContractOrderDO two = orderDoList.get(1);
-        //收益
-        String sumProfit = verifyParams.getFloatNum(one.getProfit() + two.getProfit());
-        //手续费
-        String sumFee = verifyParams.getFloatNum(one.getFee() + two.getFee());
-        //基差
-        String basisPrice = verifyParams.getFloatNum(Math.abs(one.getTradeAvgPrice() - two.getTradeAvgPrice()) / one.getTradeAvgPrice() * 100);
+
         //订单成交信息入数据库
-        Long num = contractOrderDAO.insertBatch(orderDoList);
+        contractOrderDAO.insertBatch(orderDoList);
+        //基差
+        String basisPrice = Arith.getStrBigDecimal(Arith.mul(Arith.div(Math.abs(Arith.sub(one.getTradeAvgPrice(),two.getTradeAvgPrice())),one.getTradeAvgPrice()),100));
+        //收益
+        String sumProfit = Arith.getStrBigDecimal(Arith.add(one.getProfit(),two.getProfit()));
+        //手续费
+        String sumFee = Arith.getStrBigDecimal(Arith.add(one.getFee(),two.getFee()));
         logger.info("币:"+symbol+"平仓下单信息:[收益"+sumProfit+"手续费"+sumFee+"基差:"+basisPrice+"%订单信息:"+contractOrderInfo+"]");
 //        Iterator<ContractOrderDO> iterator = orderDoList.iterator();
 //        while (iterator.hasNext()) {
