@@ -7,8 +7,10 @@ import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -18,19 +20,19 @@ import java.util.stream.Stream;
 public class RedisService {
 
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
     /**
      * 默认过期时长，单位：秒
      */
     public static final long DEFAULT_EXPIRE = 60 * 60 * 24;
 
-    @Autowired
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Autowired
+    @Resource
     private ListOperations<String, Object> listOperations;
 
-    @Autowired
+    @Resource
     private SetOperations<String, Object> setOperations;
 
     /**
@@ -40,7 +42,6 @@ public class RedisService {
 
     /**
      * 获取一个key的值
-     * @return
      */
     public String getValue(String key) {
         return stringRedisTemplate.opsForValue().get(key);
@@ -48,7 +49,6 @@ public class RedisService {
 
     /**
      * 设置一个key的值
-     * @return
      */
     public void setValue(String key,String value) {
         stringRedisTemplate.opsForValue().set(key, value);
@@ -62,8 +62,13 @@ public class RedisService {
     }
 
     /**
+     * 将一个值放入列表头部
+     */
+    public void lpush(String key, String value) {
+        listOperations.leftPush(key,value);
+    }
+    /**
      * 左边取出
-     * @return
      */
     public Object leftPop(String key) {
         return listOperations.leftPop(key);
@@ -87,7 +92,18 @@ public class RedisService {
     public String getLindex(String key,Long index) {
         return String.valueOf(listOperations.index(key,index));
     }
-
+    /**
+     * 修剪列表
+     */
+    public void listTrim(String key,long start, long end) {
+        listOperations.trim(key,start,end);
+    }
+    /**
+     * 按区间获取列表值
+     */
+    public List<Object> lrangeList(String key, long start, long end){
+        return listOperations.range(key,start,end);
+    }
     /**
      * add一个set值
      * @return
@@ -96,6 +112,12 @@ public class RedisService {
         return setOperations.add(key,value);
     }
 
+    /**
+     * 获取所有的set值
+     */
+    public Set<Object> getSetMembers(String key) {
+        return setOperations.members(key);
+    }
     /**
      * 订阅通知
      * @param channel_flag 频道
@@ -106,6 +128,7 @@ public class RedisService {
     }
 
     public boolean existsKey(String key) {
+
         return redisTemplate.hasKey(key);
     }
 

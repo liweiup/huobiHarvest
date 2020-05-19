@@ -10,29 +10,32 @@ import java.math.BigDecimal;
 @Service
 public class CacheService {
 
+    //需要监控的币名称
+    public static final String redis_key_symbol_flag = "harvest:huobi:symbol:flag";
+
     //开仓次数的key
-    private String redis_key_position_num = "harvest:huobi:position";
+    public static final String redis_key_position_num = "harvest:huobi:position";
 
     //订单队列key（开仓挂单）
-    private String redis_key_order_queue = "harvest:huobi:order:queue:put";
+    public static final String redis_key_order_queue = "harvest:huobi:order:queue:put";
 
     //订单队列key（平仓挂单）
-    private String redis_key_order_close_queue = "harvest:huobi:order:queue:put:close";
+    public static final String redis_key_order_close_queue = "harvest:huobi:order:queue:put:close";
 
     //订单队列key（错误挂单）
-    private String redis_key_order_error_queue = "harvest:huobi:order:queue:error:put";
+    public static final String redis_key_order_error_queue = "harvest:huobi:order:queue:error:put";
 
     //已经成交的订单队列key
-    private String redis_key_order_queue_deal = "harvest:huobi:order:queue:deal";
+    public static final String redis_key_order_queue_deal = "harvest:huobi:order:queue:deal";
 
     //已经成交的币的标识
-    private String redis_key_deal_flag = "harvest:huobi:deal:flag";
+    public static final String redis_key_deal_flag = "harvest:huobi:deal:flag";
 
     //当前下单的百分比
-    private String redis_key_percent_flag = "harvest:huobi:percent:flag";
+    public static final String redis_key_percent_flag = "harvest:huobi:percent:flag";
 
     //订单id放入set
-    private String redis_key_order_exist_flag = "harvest:huobi:order:exist:flag";
+    public static final String redis_key_order_exist_flag = "harvest:huobi:order:exist:flag";
 
     @Autowired
     private RedisService redisService;
@@ -78,8 +81,7 @@ public class CacheService {
     public Integer get_position_num(String symbol) {
         String redis_key_symbol = redis_key_position_num+":"+symbol;
         String flag_position_num = redisService.getValue(redis_key_symbol);
-        Integer position_num = flag_position_num == null ? 0 : Integer.parseInt(flag_position_num);
-        return position_num;
+        return flag_position_num == null ? 0 : Integer.parseInt(flag_position_num);
     }
     //设置开仓次数
     public void set_position_num(String symbol,String position_num,Integer flag_num) {
@@ -111,7 +113,6 @@ public class CacheService {
 
     /**
      * 获取挂单队列的长度
-     * @return
      */
     public Long get_redis_key_order_queue_len(String offset) {
         String redis_key = offset.equals("open") ? redis_key_order_queue : redis_key_order_close_queue;
@@ -120,7 +121,6 @@ public class CacheService {
 
     /**
      * 已成交的订单队列
-     * @return
      */
     public void deal_order_queue(String contract_code,String orderDataStr,String symbol) {
         String new_key = redis_key_order_queue_deal+":"+contract_code;
@@ -192,6 +192,7 @@ public class CacheService {
                 order = String.valueOf(redisService.leftPop(redis_key_order_close_queue));
                 break;
         }
+        assert order != null;
         if (order.equals("null")) {
             return "";
         }

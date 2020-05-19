@@ -30,7 +30,7 @@ public class HuobiServiceAspects {
             "")
     public void pointCutVP(){};
 
-    private static final long ONE_MINUTE = 3000;
+    private static final long ONE_MINUTE = 10000;
 
     @AfterThrowing(value="pointCut()",throwing="exception")
     @ExceptionHandler

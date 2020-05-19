@@ -116,12 +116,6 @@ public class Arith{ //默认除法运算精度
             return mul(sub(div(denomination,closePrice),div(denomination,openPrice)),volume);
         }
     }
-
-    /**
-     * 多仓未实现盈亏=（合约面值 / 开仓均价 - 合约面值 / 当前价格）* 持仓张数
-     * 空仓未实现盈亏=（合约面值 / 当前价格 - 合约面值 / 开仓均价）* 持仓张数
-     */
-
     /**
      * 计算基差百分比
      */

@@ -25,18 +25,17 @@ public class TaskService  {
 
     @Async
     public void exec_invoke_bi(Map<String,String> Params,Integer num) {
-
-        synchronized(getBuildLock(Params.get("symbol"))) {
-            try {
-//                logger.info("线程"+num+"开始执行"+Params.get("symbol"));
-                huobiService.invoke_bi(Params);
-            } catch (InterruptedException e) {
-                logger.error("线程异常"+e.getMessage());
-            } catch (Exception e) {
-                logger.error("线程外异常"+e.getMessage());
+        taskExecutor.execute(() -> {
+            synchronized(getBuildLock(Params.get("symbol"))) {
+                try {
+                    huobiService.invoke_bi(Params);
+                } catch (InterruptedException e) {
+                    logger.error("线程异常"+e.getMessage());
+                } catch (Exception e) {
+                    logger.error("线程外异常"+e.getMessage());
+                }
             }
-//            logger.info("线程"+num+"执行完毕"+Params.get("symbol"));
-        }
+        });
     }
     /**
      * 获取锁

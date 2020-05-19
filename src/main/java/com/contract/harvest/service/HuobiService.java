@@ -6,20 +6,21 @@ import com.contract.harvest.dao.ContractOrderDAO;
 import com.contract.harvest.entity.ContractOrderDO;
 import com.contract.harvest.entity.HuobiEntity;
 import com.contract.harvest.tools.Arith;
+import com.contract.harvest.tools.CodeConstant;
 import com.huobi.common.request.Order;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLOutput;
 import java.util.*;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
 
 @PropertySource({"classpath:/exchange.properties"})
 @Service
@@ -27,14 +28,20 @@ public class HuobiService {
 
     private static final Logger logger = LoggerFactory.getLogger(HuobiService.class);
 
-    @Autowired
+    @Resource
     private HuobiEntity huobiEntity;
 
-    @Autowired
+    @Resource
     private CacheService cacheService;
 
-    @Autowired
+    @Resource
     private ContractOrderDAO contractOrderDAO;
+
+    @Resource
+    private MailService mailService;
+
+    @Resource
+    private VerifyParams verifyParams;
 
     @Value("${space.basis_percent}")
     private double basis_percent;
@@ -53,12 +60,6 @@ public class HuobiService {
 
     @Value("${space.order_price_type}")
     private String order_price_type;
-
-    @Autowired
-    private VerifyParams verifyParams;
-
-    @Autowired
-    private RedisTemplate<String,Object> redisTemplate;
 
     public String invoke_bi_info(String symbol,String contract_type, String contract_code) {
         String bi_info = "";
@@ -116,7 +117,9 @@ public class HuobiService {
                 Thread.sleep(3000);
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_order");
-                logger.info("开仓下单-币:"+symbol+"当前基差:"+Arith.getStrBigDecimal(now_percent)+"order_info:"+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+orders.toString());
+                String info_str = "开仓下单-币:"+symbol+"当前基差:"+Arith.getStrBigDecimal(now_percent)+"order_info:"+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+orders.toString();
+                logger.info(info_str);
+                mailService.sendMail(CodeConstant.getMsg(CodeConstant.OPEN_SPACE_AN_ORDER),info_str,"");
                 return;
             }else {
                 logger.info("不做处理,币:"+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent));
@@ -132,8 +135,9 @@ public class HuobiService {
                 //获取平仓方向
                 Map<String,String> flagDirection = verifyParams.getContractAccountPositionInfo(symbol);
                 if (flagDirection.isEmpty()) {
-                    logger.info("币："+symbol+"没有可清仓位"+"当前基差:"+directionMap.get("percent"));
-                    cacheService.inform_sub("order_queue","handle_close_order");
+                    String info_str = "币："+symbol+"没有可清仓位"+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent);
+                    logger.info(info_str);
+                    mailService.sendMail(CodeConstant.getMsg(CodeConstant.NO_CLEAN_SPACE),info_str,"");
                     return;
                 }
                 quarter_direction = flagDirection.get(cq_contract_type);
@@ -141,7 +145,9 @@ public class HuobiService {
                 String sum_volume = flagDirection.get("volume");
                 double profit = Double.parseDouble(flagDirection.get("profit"));
                 if (Arith.compareNum(0,profit)) {
-                    logger.info("币:"+symbol+"亏损无法清仓-盈利:"+Arith.getStrBigDecimal(profit)+"当前基差:"+directionMap.get("percent"));
+                    String info_str = "币:"+symbol+"亏损无法清仓-盈利:"+Arith.getStrBigDecimal(profit)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent);
+                    logger.info(info_str);
+                    mailService.sendMail(CodeConstant.getMsg(CodeConstant.LOSS_NO_CAN_CLEAN_SPACE),info_str,"");
                     return;
                 }
                 //平仓
@@ -154,7 +160,9 @@ public class HuobiService {
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_close_order");
                 //清仓
-                logger.info("清仓下单,币:"+symbol+"预估盈利:"+Arith.getStrBigDecimal(profit)+"平仓张数:"+sum_volume+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"交易次数:"+position_num+"订单"+contractBatchorder);
+                String info_str = "清仓下单,币:"+symbol+"预估盈利:"+Arith.getStrBigDecimal(profit)+"平仓张数:"+sum_volume+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"交易次数:"+position_num+"订单"+contractBatchorder;
+                logger.info(info_str);
+                mailService.sendMail(CodeConstant.getMsg(CodeConstant.CLEAN_SPACE_AN_ORDER),info_str,"");
                 return;
             }
             //(当前基差 - 上次基差) >= 第二次及之后开仓基差百分比
@@ -172,7 +180,9 @@ public class HuobiService {
                 Thread.sleep(3000);
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_order");
-                logger.info("加仓下单-币:"+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"上次基差"+Arith.getStrBigDecimal(pre_percent)+"加仓flag:"+Arith.getStrBigDecimal(flag_add_percent)+"order_info:"+orders.toString());
+                String info_str = "加仓下单-币:"+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"上次基差"+Arith.getStrBigDecimal(pre_percent)+"加仓flag:"+Arith.getStrBigDecimal(flag_add_percent)+"order_info:"+orders.toString();
+                logger.info(info_str);
+                mailService.sendMail(CodeConstant.getMsg(CodeConstant.ADD_SPACE_AN_ORDER),info_str,"");
                 return;
             }
             //减仓 = (上次基差 - 第二次及之后开仓固定基差) >= 当前的平仓基差
@@ -182,7 +192,9 @@ public class HuobiService {
                 //获取平仓方向
                 Map<String,String> flagDirection = verifyParams.getContractAccountPositionInfo(symbol);
                 if (flagDirection.isEmpty()) {
-                    logger.info("币：" + symbol + "没有可减仓位"+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent));
+                    String info_str = "币：" + symbol + "没有可减仓位"+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent);
+                    logger.info(info_str);
+                    mailService.sendMail(CodeConstant.getMsg(CodeConstant.NO_REDUCE_SPACE),info_str,"");
                     return;
                 }
                 quarter_direction = flagDirection.get(cq_contract_type);
@@ -191,7 +203,9 @@ public class HuobiService {
                 //减仓
                 List<Order> orders = verifyParams.getListOrder(symbol,flag_close_percent,volume,"close",lever_rate,order_price_type,contract_code_arr,quarter_direction,week_direction,cq_contract_type,nc_contract_type);
                 if (profit < 0) {
-                    logger.info("币:"+symbol+"亏损无法减仓-盈利:"+Arith.getStrBigDecimal(profit)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent));
+                    String info_str = "币:"+symbol+"亏损无法减仓-盈利:"+Arith.getStrBigDecimal(profit)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent);
+                    logger.info(info_str);
+                    mailService.sendMail(CodeConstant.getMsg(CodeConstant.LOSS_NO_CAN_REDUCE_SPACE),info_str,"");
                     return;
                 }
                 //减仓下单
@@ -200,7 +214,9 @@ public class HuobiService {
                 Thread.sleep(1000);
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_close_order");
-                logger.info("减仓下单,币:"+symbol+"预估盈利:"+Arith.getStrBigDecimal(profit)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"上次基差"+Arith.getStrBigDecimal(pre_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent)+"订单"+orders.toString());
+                String info_str = "减仓下单,币:"+symbol+"预估盈利:"+Arith.getStrBigDecimal(profit)+"当前平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"上次基差"+Arith.getStrBigDecimal(pre_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent)+"订单"+orders.toString();
+                logger.info(info_str);
+                mailService.sendMail(CodeConstant.getMsg(CodeConstant.REDUCE_SPACE_AN_ORDER),info_str,"");
                 return;
             }
             logger.info("次数:"+position_num+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"加仓flag:"+Arith.getStrBigDecimal(flag_add_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent));
@@ -226,7 +242,7 @@ public class HuobiService {
     public void handleOrder() throws Exception {
         //获取队列里的一个订单
         String order_info_str = cacheService.get_order_in_queue("open");
-//        order_info_str = "{\"symbol\":\"BSV\",\"status\":\"ok\",\"data\":{\"errors\":[],\"success\":[{\"order_id\":709565299313250304,\"index\":1,\"order_id_str\":\"709565299313250304\"},{\"order_id\":709565299363581952,\"index\":2,\"order_id_str\":\"709565299363581952\"}]},\"ts\":1587125375356}";
+//        order_info_str = "{\"symbol\":\"BSV\",\"status\":\"ok\",\"data\":{\"errors\":[],\"success\":[{\"order_id\":711669933234429952,\"index\":1,\"order_id_str\":\"711669933234429952\"},{\"order_id\":711669933259595776,\"index\":2,\"order_id_str\":\"711669933259595776\"}]},\"ts\":1587125375356}";
         if (StringUtils.isEmpty(order_info_str)) {
             logger.info("获取队列中的订单为空:["+order_info_str+"]");
             return;
@@ -289,7 +305,9 @@ public class HuobiService {
         Long num = contractOrderDAO.insertBatch(orderDoList);
         //移除本条挂单记录
         cacheService.lpop_order_in_queue("open");
-        logger.info("币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+Arith.getStrBigDecimal(sure_basis_percent)+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]");
+        String info_str = "币:"+symbol+"开仓下单信息:[成交订单数量"+num+"基差:"+Arith.getStrBigDecimal(sure_basis_percent)+"季度:"+cq_price+"周:"+nc_price+"订单信息:"+contractOrderInfo+"]";
+        logger.info(info_str);
+        mailService.sendMail("开仓下单信息",info_str,"");
     }
 
     /**
@@ -364,7 +382,9 @@ public class HuobiService {
         String sumProfit = Arith.getStrBigDecimal(Arith.add(one.getProfit(),two.getProfit()));
         //手续费
         String sumFee = Arith.getStrBigDecimal(Arith.add(one.getFee(),two.getFee()));
-        logger.info("币:"+symbol+"平仓下单信息:[收益"+sumProfit+"手续费"+sumFee+"基差:"+basisPrice+"%订单信息:"+contractOrderInfo+"]");
+        String info_str = "币:"+symbol+"平仓下单信息:[收益"+sumProfit+"手续费"+sumFee+"基差:"+basisPrice+"%订单信息:"+contractOrderInfo+"]";
+        logger.info(info_str);
+        mailService.sendMail("平仓下单信息",info_str,"");
 //        Iterator<ContractOrderDO> iterator = orderDoList.iterator();
 //        while (iterator.hasNext()) {
 //            contractOrderDAO.updateByOrderId(iterator.next());

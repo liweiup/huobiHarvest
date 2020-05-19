@@ -22,7 +22,6 @@ public class TaskPoolConfig {
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return executor;
     }
-
 //    public Executor threadPoolExecutor() {
 //        return new ThreadPoolExecutor(1, 2, 200, TimeUnit.MILLISECONDS,
 //                new ArrayBlockingQueue<Runnable>(5));

@@ -27,6 +27,9 @@ public class VerifyParams {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private MailService mailService;
+
     @Value("${space.buy_small_vol}")
     private int buy_small_vol;
 
@@ -41,7 +44,7 @@ public class VerifyParams {
     private final String nw_flag = "_NW";
     private final String cw_flag = "_CW";
 
-    private static final Logger logger = LoggerFactory.getLogger(HuobiService.class);
+    private static final Logger logger = LoggerFactory.getLogger(VerifyParams.class);
 
     /**
      * 获取基差的百分比与具体基差
@@ -92,6 +95,7 @@ public class VerifyParams {
             if (deal_flag_arr.length != 2)
             {
                 logger.error("交易代码出错:["+ Arrays.toString(deal_flag_arr) +"]");
+                mailService.sendMail("交易代码出错",Arrays.toString(deal_flag_arr),"");
                 return null;
             }
             //合约信息
@@ -111,8 +115,9 @@ public class VerifyParams {
                     logger.error("nw_contract_info_error:["+nw_contract_info.toJSONString()+"]");
                     return null;
                 }
-            }else {
-                logger.error("cq_contract_info_error:["+cq_contract_info.toJSONString()+"]");
+            } else {
+                logger.error("交易周期错误:["+cq_contract_info.toJSONString()+"]");
+                mailService.sendMail("交易周期错误",cq_contract_info.toJSONString(),"");
                 return null;
             }
         }
@@ -193,6 +198,7 @@ public class VerifyParams {
             return flagDirection;
         }
         double profit = 0;
+        int sumVolume = 0;
         for (Object position:positionsArr) {
             JSONObject positionObj = JSONObject.parseObject(String.valueOf(position));
             String contract_code = positionObj.getString("contract_code");
@@ -203,7 +209,9 @@ public class VerifyParams {
             flagDirection.put(contract_type,flagDirection.get(contract_code));
             flagDirection.put("volume",volume);
             profit = Arith.add(profit,positionObj.getDoubleValue("profit"));
+            sumVolume += positionObj.getIntValue("volume");
         }
+        flagDirection.put("sumVolume",String.valueOf(sumVolume));
         flagDirection.put("profit",String.valueOf(profit));
         return flagDirection;
     }

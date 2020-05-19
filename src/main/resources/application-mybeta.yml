@@ -34,6 +34,22 @@ spring:
         max-wait: -1 # 连接池最大阻塞等待时间（使用负值表示没有限制）
         max-active: 50 # 连接池最大连接数（使用负值表示没有限制）
         min-idle: 0 # 连接池中的最小空闲连接
+
+  mail:
+    host: smtp.qq.com
+    protocol: smtp
+    username: liwei.job@foxmail.com
+    password: exuyrjaejnykiehd
+    properties:
+      smtp:
+        auth: false
+        starttls:
+          enable: false
+          required: false
+      mail:
+        smtp:
+          ssl:
+            enable: true
 mybatis:
   check-config-location: false
   configuration:
@@ -59,3 +75,4 @@ logging:
 huobi:
   api_key: 25cd197d-e1ea52a2-3d2xc4v5bu-d1c27
   secret_key: 3c78ba15-14bdb083-d60a4757-b1021
+
