@@ -101,6 +101,9 @@ public class HuobiService {
         //上次开仓时的基差
         double pre_percent = cacheService.get_percent_flag(symbol);
 //        logger.info("交易次数:"+position_num+"map:"+directionMap+directionCloseMap);
+//        System.out.println(priceMap);
+//        System.out.println(directionMap);
+//        System.out.println(directionCloseMap);
 //        System.exit(0);
         //交易代码
         String[] contract_code_arr = priceMap.get("contract_code").split("-");
@@ -117,12 +120,12 @@ public class HuobiService {
                 Thread.sleep(3000);
                 //订阅通知
                 cacheService.inform_sub("order_queue","handle_order");
-                String info_str = "开仓下单-币:"+symbol+"当前基差:"+Arith.getStrBigDecimal(now_percent)+"order_info:"+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+orders.toString();
+                String info_str = "开仓下单-币:"+symbol+"当前基差:"+Arith.getStrBigDecimal(now_percent)+"order_info:"+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+orders.toString()+directionMap;
                 logger.info(info_str);
                 mailService.sendMail(CodeConstant.getMsg(CodeConstant.OPEN_SPACE_AN_ORDER),info_str,"");
                 return;
             }else {
-                logger.info("不做处理,币:"+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent));
+                logger.info("不做处理,币:"+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+directionMap);
                 return;
             }
         }
@@ -219,7 +222,7 @@ public class HuobiService {
                 mailService.sendMail(CodeConstant.getMsg(CodeConstant.REDUCE_SPACE_AN_ORDER),info_str,"");
                 return;
             }
-            logger.info("次数:"+position_num+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"加仓flag:"+Arith.getStrBigDecimal(flag_add_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent));
+            logger.info("次数:"+position_num+symbol+"当前开仓基差:"+Arith.getStrBigDecimal(now_percent)+"平仓基差:"+Arith.getStrBigDecimal(now_close_percent)+"加仓flag:"+Arith.getStrBigDecimal(flag_add_percent)+"减仓flag:"+Arith.getStrBigDecimal(flag_close_percent)+directionCloseMap);
         }
     }
     /**
