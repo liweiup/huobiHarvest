@@ -39,7 +39,7 @@ spring:
     host: smtp.qq.com
     protocol: smtp
     username: liwei.job@foxmail.com
-    password: exuyrjaejnykiehd
+    password: zfjphctuafolheie
     properties:
       smtp:
         auth: false
