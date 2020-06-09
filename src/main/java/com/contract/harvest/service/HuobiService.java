@@ -286,8 +286,9 @@ public class HuobiService {
         float cq_price = orderData.getJSONObject(0).getFloatValue("trade_avg_price");
         float nc_price = orderData.getJSONObject(1).getFloatValue("trade_avg_price");
         if (cq_price <= 0 || nc_price <= 0) {
-            cq_price = orderData.getJSONObject(0).getFloatValue("price");
-            nc_price = orderData.getJSONObject(1).getFloatValue("price");
+            logger.error("成交均价为0:["+contractOrderInfo+"]");
+            mailService.sendMail("开仓下单成交均价为0",contractOrderInfo,"");
+            return;
         }
         //记录本次下单基差
         Map<String,String> basisPriceMap = verifyParams.getBasisFlag(cq_price,nc_price);
@@ -296,6 +297,7 @@ public class HuobiService {
         {
             //从挂单队列中将订单取出并放到错误队列
             cacheService.lpop_order_to_error_queue("open");
+            mailService.sendMail("成交均价基差为0",contractOrderInfo,"");
             logger.error("成交均价基差为0:["+contractOrderInfo+"]");
         }
         //设置基差

@@ -2,6 +2,7 @@ package com.contract.harvest.service;
 
 import com.contract.harvest.tools.Arith;
 import com.contract.harvest.tools.CodeConstant;
+import com.mysql.cj.protocol.x.Notice;
 import org.apache.http.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -51,7 +53,7 @@ public class ScheduledService {
     /**
      * 检测订单成交数是否一致
      */
-    @Scheduled(cron = "0 0 */1 * * ?")  //每一小时执行一次
+    @Scheduled(cron = "0 */10 * * * ?")  //每一小时执行一次
     public void checkDealOrder() {
         for (Object symbolObj : getSymbol()) {
             String symbol = String.valueOf(symbolObj);
@@ -71,7 +73,7 @@ public class ScheduledService {
      * 基差和小于 成交次数 * 第二次及之后开仓基差百分比
      * 做订单合并
      */
-    @Scheduled(cron = "0 0 */1 * * ?")  //每一小时执行一次
+    @Scheduled(cron = "0 */30 * * * ?")  //每30分钟执行一次
     public void checkDealOrderAndMerge() {
         for (Object symbolObj : getSymbol()) {
             String symbol = String.valueOf(symbolObj);
@@ -103,7 +105,7 @@ public class ScheduledService {
     /**
      * 多仓和空仓数量不一致
      */
-    @Scheduled(cron = "0 0 */1 * * ?")  //每一小时执行一次
+    @Scheduled(cron = "0 */5 * * * ?")  //每5分钟执行一次
     public void checkPositionInfo() throws IOException, HttpException {
         for (Object symbolObj : getSymbol()) {
             String symbol = String.valueOf(symbolObj);
@@ -119,7 +121,7 @@ public class ScheduledService {
         }
     }
 
-    @Scheduled(cron = "*/2 * * * * ?")  //每2秒执行一次
+//    @Scheduled(cron = "*/2 * * * * ?")  //每2秒执行一次
     public void invoke_bi() throws Exception {
         for (Object symbolObj : getSymbol()) {
             String symbol = String.valueOf(symbolObj);
@@ -132,4 +134,20 @@ public class ScheduledService {
 //                taskExecutor.getThreadPoolExecutor().getQueue().size()+"，已执行玩别的任务数目："+taskExecutor.getThreadPoolExecutor().getCompletedTaskCount());
         }
     }
+//
+//    @Scheduled(cron = "*/1 * * * * ?")
+//    public void restTemplateGetTest(){
+//        RestTemplate restTemplate = new RestTemplate();
+//        String notice = restTemplate.getForObject("http://ym.api.com/index/download_kline_bian"
+//                , String.class);
+//        System.out.println(notice);
+//    }
+//    @Scheduled(cron = "*/1 * * * * ?")
+//    public void restTemplateGetTest15(){
+//        RestTemplate restTemplate = new RestTemplate();
+//        String notice = restTemplate.getForObject("http://ym.api.com/Index/download_kline_bian15_min"
+//                , String.class);
+//        System.out.println(notice);
+//    }
+
 }
