@@ -121,7 +121,7 @@ public class ScheduledService {
         }
     }
 
-//    @Scheduled(cron = "*/2 * * * * ?")  //每2秒执行一次
+    @Scheduled(cron = "*/2 * * * * ?")  //每2秒执行一次
     public void invoke_bi() throws Exception {
         for (Object symbolObj : getSymbol()) {
             String symbol = String.valueOf(symbolObj);
