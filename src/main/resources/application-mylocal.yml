@@ -37,8 +37,8 @@ spring:
   mail:
     host: smtp.qq.com
     protocol: smtp
-    username: liwei.job@foxmail.com
-    password: exuyrjaejnykiehd
+    username: xxxx@foxmail.com
+    password: xxxx
     properties:
       smtp:
         auth: false
@@ -67,5 +67,5 @@ logging:
         harvest: info
 
 huobi:
-  api_key: 1f708bc3-ntmuw4rrsr-df2c9550-4fd35
-  secret_key: 8d462a2a-c794bf84-d84835d2-e5d67
+  api_key: xxxx
+  secret_key: xxxx
