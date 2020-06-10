@@ -15,18 +15,18 @@ spring:
       validation-timeout: 3000
       login-timeout: 5
     mysql:
-      jdbc-url: jdbc:mysql://149.129.80.230:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
+      jdbc-url: jdbc:mysql://xxxx:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
       username: root
-      password: iphone5C,.
+      password: xxx
     pingcap:
-      jdbc-url: jdbc:mysql://149.129.80.230:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
+      jdbc-url: jdbc:mysql://xxxx:3306/harvest?useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
       username: root
-      password: iphone5C,.
+      password: xxx
   redis:
-    host: 149.129.80.230
-    port: 6379
+    host: xxx
+    port: xx
     database: 1
-    password: iphone5C,.
+    password: xxxx
     timeout: 10000
     lettuce:
       pool:
@@ -38,8 +38,8 @@ spring:
   mail:
     host: smtp.qq.com
     protocol: smtp
-    username: liwei.job@foxmail.com
-    password: zfjphctuafolheie
+    username: xxxx@foxmail.com
+    password: xxxx
     properties:
       smtp:
         auth: false
@@ -68,11 +68,8 @@ logging:
       contract:
         harvest: info
 
-#huobi:
-#  api_key: 0fb32fd1-697ea0e8-1hrfj6yhgg-453e0
-#  secret_key: 375ac040-22d27b91-0a622abf-68e1d
 
 huobi:
-  api_key: 25cd197d-e1ea52a2-3d2xc4v5bu-d1c27
-  secret_key: 3c78ba15-14bdb083-d60a4757-b1021
+  api_key: xxxx
+  secret_key: xxxx
 
